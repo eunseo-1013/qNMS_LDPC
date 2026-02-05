@@ -9,12 +9,7 @@ import torch
 #wman_N1152_R12_z72.txt
 
 
-filename="wman_N0576_R34_z24.txt"
-N=int(filename[6:10])
-K=N*int(filename[12:13])/int(filename[13:14])
-K=int(K)
 
-print("N:", N ,", K :" , K)
 
 def make_k_bit(K): # 돌려볼 비트 만들기 k 길이 짜리
    shape=(1,K)
@@ -22,7 +17,7 @@ def make_k_bit(K): # 돌려볼 비트 만들기 k 길이 짜리
    return (orignal_bit)
 
 
-orignal_bit=make_k_bit(K)
+
 
 def H_to_tensor(filename):
     df=pd.read_csv(filename,header=None,sep='\s+')
@@ -30,8 +25,6 @@ def H_to_tensor(filename):
     tr=torch.tensor(np_array)
     print("H shape :", tr.shape)
     return tr
-
-H=H_to_tensor(filename)
 
 def RREF(H): ## 이진연산을 써야함!!!!!!! 아오 바보야 ㅠㅠ H[ A | I ]
     pivot_row=0
@@ -65,8 +58,18 @@ def make_G_using_H(RREF_H,K):
     print("G shape:",G.shape)
     return G
 
-G=make_G_using_H(RREF(H),K)
 
+
+'''
+G=make_G_using_H(RREF(H),K)
+filename="wman_N0576_R34_z24.txt"
+N=int(filename[6:10])
+K=N*int(filename[12:13])/int(filename[13:14])
+K=int(K)
+
+print("N:", N ,", K :" , K)
+orignal_bit=make_k_bit(K)
+H=H_to_tensor(filename)
 print("original _code ",orignal_bit.shape)
 ldpc_code=orignal_bit@G
 ldpc_code=ldpc_code%2
@@ -76,7 +79,7 @@ print("인코딩 잘 됐나~?:", torch.equal(orignal_bit, ldpc_code[:, :K].long(
 Z=(H@ldpc_code.T)
 Z=Z%2
 print(Z.shape)
-
+'''
 
 
 
