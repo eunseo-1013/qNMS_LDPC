@@ -50,7 +50,6 @@ def RREF(H): ## 이진연산을 써야함!!!!!!! 아오 바보야 ㅠㅠ H[ A | 
 
 
 def make_G_using_H(RREF_H,K):
-
     I=torch.eye(K,dtype=RREF_H.dtype)
     A=RREF_H[:,:K]
     print(A.shape)

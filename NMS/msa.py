@@ -34,9 +34,11 @@ def initial_M():
 def c_to_v(alpha=1,beta=0):
     for c in range(E.shape[0]):
         find=torch.where(H[c,:]==1)[0]   # 체크노드에 연결된 v 
+        '''
         if(len(find)==1):
             print(c)
             continue
+        '''
         for v in find:
             find_e=find[find!=v] # 자기자신 제외
             min_v=torch.min(torch.abs(M[c,find_e]))
