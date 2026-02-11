@@ -1,20 +1,53 @@
 import matplotlib.pyplot as plt
 import numpy as np
-SNR = [1.0, 2.0, 3.0, 4.0, 5.0]
+SNR = [1.0, 1.5, 2.0, 2.5, 3.0,3.5, 4.0,4.5, 5.0]
 
 
-BER_1 = [0.14791665971279144, 0.11267361044883728, 0.0963541641831398, 0.08697916567325592, 0.0703125]
-BER_2 = [0.1597222238779068, 0.09375, 0.1059027761220932, 0.0625, 0.1180555522441864]
-BER_3 =[0.1597222238779068, 0.1336805522441864, 0.1145833358168602, 0.1232638880610466, 0.1440972238779068]
+BER_1 =[0.26168576388888887, 0.23311215277777778, 0.20492708333333334, 0.17676944444444445, 0.14800763888888888, 0.11557256944444444, 0.07292604166666666, 0.030048263888888888, 0.009862847222222223]
+BER_2 = [0.26132256944444443, 0.23273888888888888, 0.2045625, 0.1759423611111111, 0.14629166666666665, 0.11154201388888889, 0.06443090277777777, 0.018670833333333334, 0.002184375]
+BER_3 =[0.2613447916666667, 0.23275451388888888, 0.20456909722222222, 0.175965625, 0.14628090277777778, 0.11114340277777777, 0.06370347222222222, 0.019060763888888888, 0.0027631944444444444]
+
+frame = 5000
+batch = 50
+epoch = 10
+test_frame= 10000
+
+iteration_num=20
+
+train_snr=2.0 
 
 
+# 일반그래프
+'''
 plt.figure()
-plt.plot(SNR, BER_1, marker='o', label='iteration=3')
-plt.plot(SNR, BER_2, marker='s', label='iteration=5')
-plt.plot(SNR, BER_3, marker='^', label='iteration=8')
+plt.plot(SNR, BER_1, marker='o', label=f'alpha_init = 0.7 ,beta_init = 0')
+plt.plot(SNR, BER_2, marker='s', label=f'alpha_init = 0.7 ,beta_init = 0.2')
+plt.plot(SNR, BER_3, marker='^', label='alpha_init = 0.7 ,beta_init = 0.05')
 plt.xlabel("SNR (db)")
 plt.ylabel("BER")
 plt.legend()
-plt.title("SNR - BER")
+plt.title(f'iter = {iteration_num} ,train_snr = {train_snr} \n alpha,beta factor - iteration NMS')
 plt.grid(True)
+plt.show()
+'''
+# 로그 그래프
+
+plt.figure(figsize=(10, 7))
+
+# semilogy를 사용하면 Y축이 자동으로 로그 스케일이 됩니다.
+plt.semilogy(SNR, BER_1, marker='o', markersize=6, linewidth=1.5, label='alpha_init=0.7, beta_init=0')
+#plt.semilogy(SNR, BER_2, marker='s', markersize=6, linewidth=1.5, label='alpha_init=0.7, beta_init=0.2')
+#plt.semilogy(SNR, BER_3, marker='^', markersize=6, linewidth=1.5, label='alpha_init=0.7, beta_init=0.05')
+
+plt.xlabel("SNR (dB)", fontsize=12)
+plt.ylabel("Bit Error Rate (BER)", fontsize=12)
+plt.title(f'Iteration: {iteration_num}, Train SNR: {train_snr}dB\n SNR - BER (Log Scale)', fontsize=14)
+
+# 로그 그래프에서는 주 그리드와 보조 그리드를 모두 표시하는 것이 보기 좋습니다.
+plt.grid(True, which="both", ls="-", alpha=0.5)
+
+# Y축 범위를 데이터에 맞춰 자동 조절하되, 하한선을 적절히 설정 (예: 10^-5)
+# plt.ylim(1e-5, 1) 
+
+plt.legend(loc='best', fontsize=10)
 plt.show()

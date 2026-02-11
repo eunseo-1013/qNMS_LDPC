@@ -20,8 +20,8 @@ def make_k_bit(K): # 돌려볼 비트 만들기 k 길이 짜리
 
 
 def H_to_tensor(filename):
-    df=pd.read_csv(filename,header=None,sep='\s+')
-    np_array=df.values.astype(np.int64)
+    df=pd.read_csv(filename,header=None,sep=r'\s+')
+    np_array=df.values.astype(np.float32)
     tr=torch.tensor(np_array)
     print("H shape :", tr.shape)
     return tr
@@ -41,7 +41,7 @@ def RREF(H): ## 이진연산을 써야함!!!!!!! 아오 바보야 ㅠㅠ H[ A | 
         # H[pivot_row]= H[pivot_row]/H[pivot_row,col]  <- xor 연산이기에 0,1 만 존재 == 1로만들필요 x
         for i in range(H.shape[0]):
             if(i!=pivot_row and H[i,col] == 1):
-                 H[i]=H[i]^H[pivot_row]
+                 H[i]=H[i].to(torch.uint8)^H[pivot_row].to(torch.uint8)
 
         pivot_row+=1
     return H
@@ -50,7 +50,7 @@ def RREF(H): ## 이진연산을 써야함!!!!!!! 아오 바보야 ㅠㅠ H[ A | 
 
 
 def make_G_using_H(RREF_H,K):
-    I=torch.eye(K,dtype=RREF_H.dtype)
+    I=torch.eye(K,dtype=RREF_H.dtype,device=RREF_H.device)
     A=RREF_H[:,:K]
     print(A.shape)
     G=torch.cat([I,A.t()],dim=1)
