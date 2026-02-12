@@ -50,6 +50,7 @@ def c_to_v(E,M,alpha=1,beta=0):
             sgn=torch.prod(torch.sign(M[c,find_e]))
             E[c,v]=sgn*(alpha*min_v-beta)
     return E
+
 def cal_L(L,E):
     for v in range(E.shape[1]):
         find=torch.where(H[:,v]==1)[0] # 변수노드에 연결된 모든 체크노드

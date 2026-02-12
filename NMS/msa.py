@@ -67,13 +67,15 @@ def update_M():
         
 if __name__ == "__main__":
     SNR=[1.0,2.0,3.0,4.0,5.0]
-    iteration=3
+    iteration=20
     filename="wman_N0576_R34_z24.txt"
     N=int(filename[6:10])
     K=N*int(filename[12:13])/int(filename[13:14])
     K=int(K)
     print("N:", N ,", K :" , K)
-    frame=100 # 비트 수
+    
+    frame = 5000
+
     #-------------------------------------ldpc 인코딩-------------------------------
     H=H_to_tensor(filename)
     G=make_G_using_H(RREF(H),K)
@@ -89,7 +91,7 @@ if __name__ == "__main__":
         ber2=0
         for i in range(frame): # bit_num == 프레임수 
             K_bit = make_k_bit(K)
-            code = K_bit@G
+            code = K_bit.float()@G.float()
             code=(code%2)
             code=code.float()
             orignal_code=code
@@ -115,7 +117,7 @@ if __name__ == "__main__":
                 # hard decision
                 hard_decision()
                 # 확인
-                sydrome=(H@Z)%2
+                sydrome=(H.float()@Z.float())%2
                 if(torch.all(sydrome==0)):
                     #print("신드롬 통과~")
                     break

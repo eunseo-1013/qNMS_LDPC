@@ -123,20 +123,10 @@ def update_M(M,E):
     return M
     '''
 def update_M(E, r):
-    # E: (batch, M, N) - 체크 노드에서 온 메시지
-    # r: (batch, N) - 채널에서 온 초기 LLR
-    
-    # 1. 각 변수 노드(N)에 연결된 모든 체크 노드 메시지의 합을 구함
-    # (batch, M, N) -> (batch, 1, N)
+
     sum_E = torch.sum(E, dim=1, keepdim=True)
-    
-    # 2. 전체 합 + 채널 LLR - 자기 자신(E)
-    # r은 (batch, N)이므로 차원을 (batch, 1, N)으로 맞춰서 더해줍니다.
     M = r.unsqueeze(1) + sum_E - E
-    
-    # 3. H 행렬이 1인 곳만 메시지가 존재하므로 마스킹
-    # H: (M, N)
-    M = M * H.unsqueeze(0)
+    M = M * H.unsqueeze(0) 
     
     return M
 
@@ -166,7 +156,7 @@ class NMS(nn.Module):
 
 frame = 5000
 batch = 50
-epoch = 10
+epoch = 1
 test_frame= 10000
 
 iteration_num=20
@@ -192,10 +182,9 @@ K=int(K)
 print("N:", N ,", K :" , K)
 
 
-
-
 step = frame // batch # 1epoch 당 몇번 업데이트 ?
 test_step = test_frame // batch # 1epoch 당 몇번 업데이트 ?
+
 
 #-------------------------------------ldpc 인코딩-------------------------------
 H=H_to_tensor(filename).to(device)
@@ -258,7 +247,7 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             Z=hard_decision(final_llr_hat)
             mask=(orignal_code == Z)
             ber = ber+ (mask == False).sum().item()
-        ber=ber/(N*frame)
+        ber=ber/(N*test_frame)
         BER_array.append(ber)
         print("SNR :",snr,"BER :",ber)
 
