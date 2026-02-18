@@ -154,9 +154,9 @@ class NMS(nn.Module):
 
 
 
-frame = 5000
-batch = 50
-epoch = 1
+frame = 50
+batch = 1
+epoch = 10
 test_frame= 10000
 
 iteration_num=20
@@ -208,6 +208,9 @@ llr_hat=(torch.zeros(frame,N))
 #---------------------------------------- nms 디코딩--------------------------------
 
 
+
+
+
 model.train()
 for i in range(epoch): 
     for _ in range(step):
@@ -225,8 +228,14 @@ for i in range(epoch):
         loss.backward()
         optimizer.step() 
     print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
+    print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
+
+
+
+
 print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
-print("training start!") 
+
+print("test start!") 
 model.eval()
 
 
@@ -243,6 +252,7 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             code = 1 - 2*code # bpsk 처리 안했었네..
             r=AWGN_re_inital_r(snr,code) # f x n
             final_llr_hat = model(r)
+            print(final_llr_hat)
             # hard decision
             Z=hard_decision(final_llr_hat)
             mask=(orignal_code == Z)

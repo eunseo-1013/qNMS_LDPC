@@ -15,14 +15,11 @@ K=N*int(filename[12])/int(filename[13])
 K=int(K)
 print("N:", N ,", K :" , K)
 
-
 frame = 5000
-batch = 50
+batch = 5
 epoch = 10
 test_frame= 10000
-
 iteration_num=20
-
 learning_rate = 0.005
 
 
@@ -90,7 +87,7 @@ def make_k_bit(K,frame): # 돌려볼 비트 만들기  batch  x  k 길이
 
 
 def AWGN_re_inital_r(snr,code):
-    # AWGN 환경 통과  <- 재미나이 헬프~~ 
+    # AWGN 환경 통과  
     signal_power=torch.mean(code**2)
     snr_linear=10**(snr/10)
     noise_power=signal_power/snr_linear
@@ -128,8 +125,8 @@ def Hdi_odd(E, r,alpha_v,beta_v):
     E=torch.relu(alpha_v*E+beta_v) + r.unsqueeze(1)
 
     # + 퀀타 씌워야 완성
-    
-    return Q(E)
+    #E=Q(E)
+    return E
 
 
 def Hdi_even(M, alpha_c,beta_c):
@@ -165,7 +162,8 @@ def Hdi_even(M, alpha_c,beta_c):
    
     E=E * H.unsqueeze(0)
    
-    E=Q((E))
+    
+    #E=Q((E))
    
     # 퀀타 추가해야함
     return E.to(device) # H=0인 곳은 다시 0으로 마스킹
@@ -184,11 +182,12 @@ def hard_decision(L):
     return Z
 
 #shaping factor
-_eta=0.5
+_eta=0.005
 # quantization level
 _b=2
+
 '''
-def Q(x,eta=_eta,b=_b): # 입력 크기 == batch x M x N or batch x M
+def Q(x,eta=_eta,b=_b): # 입력 크기 == batch x M x N 
     q=torch.arange(1,2**b,device=device,dtype=x.dtype)  #((2^^b)-1 ,) 
     diff=x.unsqueeze(-1)-q # batch  x N x (2^^b)-1.. 이게 이렇게 계산이 돼?
     exp_=torch.exp(-(diff**2)/(2*(eta**2)))
@@ -199,7 +198,7 @@ def Q(x,eta=_eta,b=_b): # 입력 크기 == batch x M x N or batch x M
     return upper/lower  # batch x M x N
  
    
-       '''
+       
 
 def Q(x, eta=_eta, b=_b):
     # LLR 범위를 고려하여 -max_val ~ +max_val 구간으로 설정
@@ -213,10 +212,28 @@ def Q(x, eta=_eta, b=_b):
     # Softmax-like weighting
     prob = exp_ / (torch.sum(exp_, dim=-1, keepdim=True) + 1e-9)
     return torch.sum(levels * prob, dim=-1)
+
 def soft_decision(x):
     nsgn=Q(x,eta=_eta,b=2)
     nsgn=2*(nsgn - 1) -1 # bpsk 처리... 모르겠는데??
     return nsgn
+
+'''
+
+
+def Q(x, eta=_eta, b=_b):
+    sum_top=0
+    sum_bottom=0
+    qk=[-1,-1/3,1,1/3]
+    for i in range(2**b):
+        q=qk[i]
+        upper=((x-q)**2)/(2*eta)
+        sum_top += q*torch.exp(-upper)
+        sum_bottom+=torch.exp(-upper)
+    print("최소값 ....", sum_bottom.min())
+    print("최소값 .... upper", sum_top.min())
+    return sum_top/(sum_bottom)
+
 
 
 
@@ -224,7 +241,7 @@ class qNMS(nn.Module):
     def __init__(self,it=3):
         super().__init__()
         self.iteration=it
-        size=(H.shape[0],H.shape[1],self.iteration)
+        size=(self.iteration)
         self.alpha_c=nn.Parameter(torch.ones(size)) # iter 별 가중치 적용
         self.beta_c=nn.Parameter(torch.zeros(size)) # iter 별 가중치 적용
         self.alpha_v=nn.Parameter(torch.ones(size)) # iter 별 가중치 적용
@@ -233,8 +250,8 @@ class qNMS(nn.Module):
         E=torch.zeros(size=(batch,H.shape[0],H.shape[1]),device=device) #  c -> v
         E=first_layer(E,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
-            E=Hdi_even(E,alpha_c=self.alpha_c[:,:,iter],beta_c=self.beta_c[:,:,iter])
-            E=Hdi_odd(E, r,alpha_v=self.alpha_v[:,:,iter],beta_v=self.beta_v[:,:,iter])
+            E=Hdi_even(E,alpha_c=self.alpha_c,beta_c=self.beta_c)
+            E=Hdi_odd(E, r,alpha_v=self.alpha_v,beta_v=self.beta_v)
         return r + torch.sum(E,dim=1)
     
 
@@ -266,9 +283,32 @@ Z=(torch.zeros(frame,N,dtype=int)).to(device)
 llr_hat=(torch.zeros(frame,N))
 
 
+# 퀀타 적용 테스트...
+
+train_snr = torch.empty(1).uniform_(1.0, 5.0).item() 
+K_bit = make_k_bit(K,1) # b x k
+code = K_bit.float()@G.float()# (b x k) x (k x n) == (b x n)
+code=(code%2)
+code=code.float()
+orignal_code=code
+code = 1 - 2*code # bpsk 처리 안했었네..
+r=AWGN_re_inital_r(train_snr,code) # b x n
+# Neural
+optimizer.zero_grad()
+llr_hat =  model(r)
+print(llr_hat.dtype)
+print(llr_hat.size())
+print("q  적용 전 ")
+print(llr_hat)
+print('Q 적용 llr _ hat')
+qllr=Q(llr_hat)
+
+print(qllr)
 
 
 
+
+'''
 #---------------------------------------- nms 디코딩--------------------------------
 
 
@@ -285,11 +325,11 @@ for i in range(epoch):
         r=AWGN_re_inital_r(train_snr,code) # b x n
         # Neural
         optimizer.zero_grad()
-        llr_hat=  model(r)
-        loss=loss_fn(llr_hat[:,:K],K_bit.float())
+        llr_hat =  model(r)
+        loss=loss_fn(llr_hat,code.float())
         loss.backward()
         optimizer.step() 
-    #print("epoch : " , i, "updated alpha : ", model.alpha_c.data)  # 1epoch 당  알파 업데이트 값
+    print("epoch : " , i)  # 1epoch 당  알파 업데이트 값
 print("updated alpha : ", model.alpha_c.data)  # 최종  알파 업데이트 값
 print("training start!") 
 model.eval()
@@ -319,4 +359,4 @@ with torch.no_grad(): # 자동 미분 중지
 print(BER_array)
 
 
- 
+'''
