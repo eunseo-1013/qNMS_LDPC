@@ -135,12 +135,13 @@ def update_M(E, r):
 
 
 
+
 class NMS(nn.Module):
     def __init__(self,it=3):
         super().__init__()
         self.iteration=it
-        self.alpha=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
-        self.beta=nn.Parameter(torch.ones(self.iteration)*0.05) # iter 별 가중치 적용
+        self.alpha=nn.Parameter(torch.ones(self.iteration)) # iter 별 가중치 적용
+        self.beta=nn.Parameter(torch.ones(self.iteration)*0) # iter 별 가중치 적용
     def forward(self,r): #llr 계산
         M=torch.zeros(size=(batch,H.shape[0],H.shape[1]),device=device) #  v -> c ( M(n-k)  x N)
         E=torch.zeros(size=(batch,H.shape[0],H.shape[1]),device=device) #  c -> v
@@ -148,19 +149,19 @@ class NMS(nn.Module):
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
             E=c_to_v(M,alpha=self.alpha[iter],beta=self.beta[iter])
+            
             M=update_M(E, r)
         return r + torch.sum(E,dim=1)
     
 
 
 
-frame = 50
-batch = 1
+frame = 5000
+batch = 100
 epoch = 10
 test_frame= 10000
 
 iteration_num=20
-
 train_snr=2.0 
 learning_rate=0.005
 
@@ -207,9 +208,7 @@ llr_hat=(torch.zeros(frame,N))
 
 #---------------------------------------- nms 디코딩--------------------------------
 
-
-
-
+'''
 
 model.train()
 for i in range(epoch): 
@@ -224,12 +223,11 @@ for i in range(epoch):
         # Neural
         optimizer.zero_grad()
         llr_hat= - model(r)
-        loss=loss_fn(llr_hat[:,:K],K_bit.float())
+        loss=loss_fn(llr_hat[:,:],orignal_code)
         loss.backward()
         optimizer.step() 
     print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
     print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
-
 
 
 
@@ -238,7 +236,7 @@ print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
 print("test start!") 
 model.eval()
 
-
+'''
 
 #----------- 성능 평가 -------------
 with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
@@ -252,12 +250,12 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             code = 1 - 2*code # bpsk 처리 안했었네..
             r=AWGN_re_inital_r(snr,code) # f x n
             final_llr_hat = model(r)
-            print(final_llr_hat)
+            #print(final_llr_hat)
             # hard decision
             Z=hard_decision(final_llr_hat)
-            mask=(orignal_code == Z)
+            mask=(orignal_code[:,:K] == Z[:,:K])
             ber = ber+ (mask == False).sum().item()
-        ber=ber/(N*test_frame)
+        ber=ber/(K*test_frame)
         BER_array.append(ber)
         print("SNR :",snr,"BER :",ber)
 
