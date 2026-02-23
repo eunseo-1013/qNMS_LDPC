@@ -20,10 +20,13 @@ epoch = 10
 test_frame= 10000
 
 iteration_num=20
+
 train_snr=2.0 
 learning_rate=0.005
 
-
+#fixed
+eta=0.05
+qk=torch.linspace(-4, 4, 2**b)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -187,24 +190,23 @@ def cnt_edge_type():
     print(np_array)
 
     print(np_array.shape)
-    position=[]
+
     cnt=0
     for i in range(np_array.shape[0]):
         for j in range(np_array.shape[1]):
             if(np_array[i][j]!=-1):
                 cnt=cnt+1
-                position.append(tuple(i,j))
 
 
-    return cnt,np_array.shape,position
+    return cnt,np_array.shape
 
 
-sharing_weight_cnt,sharing_weight_shape,sharing_weight_position=cnt_edge_type()
+sharing_weight_cnt,sharing_weight_shape=cnt_edge_type()
 
 
 
 
-def c_to_v(M, alpha,beta):
+def c_to_v(M,alpha,beta):
    
     
     abs_M = torch.abs(M)
@@ -226,6 +228,7 @@ def c_to_v(M, alpha,beta):
     valid_signs = torch.where(H == 1, signs, torch.ones_like(signs))
     row_sign_prod = torch.prod(valid_signs, dim=2, keepdim=True)
     E_sign = row_sign_prod * valid_signs 
+    E_sign.to(device)
     '''
 
     E=[]
@@ -238,10 +241,13 @@ def c_to_v(M, alpha,beta):
             E_col.concat(E_z,dim=1)
         E.concat(E_col,dim=0)
         '''
-    
+    #print("Z =========",Z_init)
     # 위의 코드 병렬화
-    alpha_expanded = alpha.repeat_interleave(Z, dim=0).repeat_interleave(Z, dim=1)
-    beta_expanded = beta.repeat_interleave(Z, dim=0).repeat_interleave(Z, dim=1)
+    alpha_expanded = torch.repeat_interleave(alpha,Z_init, dim=0).repeat_interleave(Z_init, dim=1)
+    beta_expanded = torch.repeat_interleave(beta,Z_init,dim=0).repeat_interleave(Z_init, dim=1)
+    alpha_expanded.to(device)
+    beta_expanded.to(device)
+    #print(M.device, H.device, alpha.device)
     E = alpha_expanded * E_sign * torch.relu(E_abs - beta_expanded)
     
     #E = alpha * E_sign * torch.max(torch.zeros_like(E_abs),E_abs-beta)
@@ -265,16 +271,18 @@ class NMS(nn.Module):
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
-            E=c_to_v(M,alpha=self.alpha[:,iter],beta=self.beta[:,iter])
-            #E=Q(E,self.eta[iter],self.qk)
-            M=update_M(E, r)
-            #M=Q(M,self.eta[iter],self.qk)
+            E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
+            E=Q(E,eta,qk)
+            M_new=update_M(E, r)
+            damping=0.5
+            M=damping*M+(1-damping)*M_new
+            M=Q(M,eta,qk)
         return r + torch.sum(E,dim=1)
     
 
 
 
-model=NMS(it=iteration_num)
+model=NMS(it=iteration_num).to(device)
 optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
 loss_fn =  nn.BCEWithLogitsLoss()   # 이거 frame 으로 바꿔야함
 
@@ -288,6 +296,7 @@ filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
 K=N*int(filename[12])/int(filename[13])
 K=int(K)
+Z_init=int(filename[16:18])
 print("N:", N ,", K :" , K)
 
 
@@ -310,7 +319,7 @@ L=torch.zeros(frame,N).to(device)
 Z=(torch.zeros(frame,N,dtype=int)).to(device)     
 llr_hat=(torch.zeros(frame,N))
 
-'''
+
 #--------------------------------------- nms 디코딩--------------------------------
 
 model.train()
@@ -332,11 +341,11 @@ for i in range(epoch):
    
     print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
     print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
-    print("epoch : " , i, "updated qk : ", model.qk.data)  # 1epoch 당  알파 업데이트 값
-    print("epoch : " , i, "updated eta : ", model.eta.data)  # 1epoch 당  알파 업데이트 값
+    #print("epoch : " , i, "updated qk : ", model.qk.data)  # 1epoch 당  알파 업데이트 값
+    #print("epoch : " , i, "updated eta : ", model.eta.data)  # 1epoch 당  알파 업데이트 값
     
 
-'''
+
 
 print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
 
