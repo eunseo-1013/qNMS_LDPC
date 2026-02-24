@@ -150,6 +150,7 @@ class NMS(nn.Module):
             # c -> v 
             E=c_to_v(M,alpha=self.alpha[iter],beta=self.beta[iter])
             
+            
             M=update_M(E, r)
         return r + torch.sum(E,dim=1)
     
@@ -208,7 +209,6 @@ llr_hat=(torch.zeros(frame,N))
 
 #---------------------------------------- nms 디코딩--------------------------------
 
-'''
 
 model.train()
 for i in range(epoch): 
@@ -236,7 +236,7 @@ print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
 print("test start!") 
 model.eval()
 
-'''
+
 
 #----------- 성능 평가 -------------
 with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고

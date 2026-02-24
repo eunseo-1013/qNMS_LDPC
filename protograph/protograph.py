@@ -25,7 +25,7 @@ train_snr=2.0
 learning_rate=0.005
 
 #fixed
-eta=0.05
+eta=0.7
 qk=torch.linspace(-4, 4, 2**b)
 
 
@@ -272,11 +272,11 @@ class NMS(nn.Module):
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
             E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-            E=Q(E,eta,qk)
-            M_new=update_M(E, r)
-            damping=0.5
-            M=damping*M+(1-damping)*M_new
-            M=Q(M,eta,qk)
+            #E=Q(E,eta,qk)
+            M=update_M(E, r)
+            #damping=0.5
+            #M=damping*M+(1-damping)*M_new
+            #M=Q(M,eta,qk)
         return r + torch.sum(E,dim=1)
     
 

@@ -3,7 +3,9 @@ import numpy as np
 SNR = [1.0, 1.5, 2.0, 2.5, 3.0,3.5, 4.0,4.5, 5.0]
 
 
-BER_1 = [0.06533064236111111, 0.05818472222222222, 0.051140625, 0.04398559027777778, 0.03657291666666666, 0.027885503472222222, 0.016107725694444443, 0.004667708333333334, 0.00054609375]
+
+BER_0=[0.13052824074074074, 0.11616875, 0.10211921296296296, 0.08737615740740741, 0.07233657407407408, 0.054055787037037034, 0.02922175925925926, 0.007509259259259259, 0.0007090277777777778]
+BER_1 = [0.06533064236111111, 0.05818472222222222, 0.051140625, 0.04398559027777778, 0.03657291666666666, 0.027885503472222222, 0.016107725694444443, 0.004667708333333334, 0.00054609375] # 아니 이거 무슨 값이야....??
 BER_2 = [0.1370048611111111, 0.12247731481481482, 0.10808541666666667, 0.09267013888888889, 0.07548912037037037, 0.05284490740740741, 0.025032870370370372, 0.005452314814814815, 0.0004787037037037037]
 BER_3 = [0.13076180555555555, 0.11622152777777778, 0.10221712962962963, 0.08754143518518519, 0.07232546296296297, 0.054521759259259256, 0.029656944444444444, 0.007931481481481482, 0.0008414351851851852]
 BER_4=[0.13052430555555555, 0.11621643518518518, 0.10215092592592592, 0.08746828703703703, 0.07263935185185186, 0.05600439814814815, 0.03581018518518519, 0.0176125, 0.008288657407407408]
@@ -17,7 +19,16 @@ BER_13=[0.13060046296296296, 0.11611458333333333, 0.1021025462962963, 0.08741087
 BER_12=[0.23791944444444443, 0.21610833333333335, 0.19321458333333333, 0.1690037037037037, 0.14230347222222223, 0.1123599537037037, 0.07074236111111111, 0.024903703703703702, 0.003935185185185185]
 BER_11=[0.13047939814814816, 0.11642777777777778, 0.10202037037037037, 0.087425, 0.07255231481481482, 0.056611342592592595, 0.038665046296296295, 0.02029814814814815, 0.007006944444444444]
 BER_10=[0.13026597222222222, 0.11644074074074075, 0.1018400462962963, 0.08746527777777778, 0.0725699074074074, 0.05436504629629629, 0.029496296296296295, 0.008446296296296295, 0.0008282407407407407]
-frame = 5000
+
+BER_14=[0.13080949074074075, 0.11725486111111111, 0.10403032407407407, 0.09094722222222222, 0.07876365740740741, 0.06702384259259259, 0.0549462962962963, 0.04069699074074074, 0.029237731481481483]
+BER_15=[0.13076736111111112, 0.11622569444444444, 0.1022037037037037, 0.08760462962962963, 0.07229143518518519, 0.05401527777777778, 0.02837453703703704, 0.0070034722222222226, 0.0006194444444444445]
+BER_16=[0.13079375, 0.11721087962962963, 0.10382291666666667, 0.09046597222222222, 0.07783796296296296, 0.06415069444444445, 0.04659837962962963, 0.028255555555555555, 0.01847361111111111]
+BER_17=[0.13050625, 0.11617824074074073, 0.10212708333333333, 0.08737800925925926, 0.07239953703703704, 0.05478356481481481, 0.031678935185185185, 0.009740972222222222, 0.0012956018518518518]
+BER_18=[0.13084791666666667, 0.1171886574074074, 0.1039, 0.09046875, 0.07780856481481481, 0.06406643518518519, 0.046285648148148145, 0.027604166666666666, 0.01785300925925926]
+BER_19=[0.1304928240740741, 0.1161849537037037, 0.10214560185185186, 0.08740671296296296, 0.07244930555555555, 0.05499699074074074, 0.03202939814814815, 0.009966435185185186, 0.001405324074074074]
+BER_20=[0.13048425925925927, 0.11620092592592593, 0.10214143518518519, 0.08739837962962962, 0.0724474537037037, 0.05453217592592593, 0.030675925925925926, 0.008729861111111112, 0.0010280092592592593]
+BER_21=[0.13111851851851852, 0.11737569444444444, 0.10381388888888889, 0.09092523148148147, 0.07887777777777778, 0.06670555555555556, 0.0549875, 0.03999884259259259, 0.028488657407407407]
+BER_22=[0.1305872685185185, 0.11661782407407408, 0.10233101851851852, 0.08815347222222222, 0.07435, 0.0607587962962963, 0.04722546296296296, 0.03386111111111111, 0.022096296296296298]
 batch = 50
 epoch = 10
 test_frame= 10000
@@ -28,15 +39,25 @@ train_snr=2.0
 
 
 
+
+
 # 로그 그래프
 
 plt.figure(figsize=(10, 7))
 
 # semilogy
-plt.semilogy(SNR, BER_1, marker='o', markersize=6, linewidth=1.5,label=" NMS ,  init alpha =0.7 init beta = 0.05")
-#plt.semilogy(SNR, BER_2, marker='o', markersize=6, linewidth=1.5,label=" SMS , fixed alpha =0.7 fixed beta = 0.05")
-#plt.semilogy(SNR, BER_3, marker='o', markersize=6, linewidth=1.5,label=" MS(float) ")
-plt.semilogy(SNR, BER_7, marker='o', markersize=6, linewidth=1.5,label=" 2bit qMS , fixed eta=0.7 fixed qk= -4~4")
+plt.semilogy(SNR, BER_0, marker='o', markersize=6, linewidth=1.5,label=" NMS - spatial weight sharing,  init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_15, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight   init alpha =0.7 init beta = 0.05" )
+#plt.semilogy(SNR, BER_17, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight , fixed damping = 0.4 init alpha =0.7 init beta = 0.05" )
+#plt.semilogy(SNR, BER_19, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight , init damping = 0.4 init alpha =0.7 init beta = 0.05" )
+#plt.semilogy(SNR, BER_20, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight , init damping = 0.3 init alpha =0.7 init beta = 0.05" )
+plt.semilogy(SNR, BER_2, marker='o', markersize=6, linewidth=1.5,label=" SMS , fixed alpha =0.7 fixed beta = 0.05")
+plt.semilogy(SNR, BER_3, marker='o', markersize=6, linewidth=1.5,label=" MS(float) ")
+#plt.semilogy(SNR, BER_7, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS - spatial weight sharing , fixed eta=0.7 fixed qk= -4~4")
+#plt.semilogy(SNR, BER_14, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
+
+#plt.semilogy(SNR, BER_16, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight , fixed damping = 0.4 fixed eta=0.7 fixed qk= -4~4")
+#plt.semilogy(SNR, BER_18, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight , init damping = 0.4 fixed eta=0.7 fixed qk= -4~4")
 #plt.semilogy(SNR, BER_6, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , init eta=0.7 init qk= -4~4")
 #plt.semilogy(SNR, BER_4, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -4~4")
 #plt.semilogy(SNR, BER_5, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -8~8")
@@ -44,8 +65,10 @@ plt.semilogy(SNR, BER_7, marker='o', markersize=6, linewidth=1.5,label=" 2bit qM
 #plt.semilogy(SNR, BER_9, marker='o', markersize=6, linewidth=1.5,label="2bit fixed qNMS sharing weight ")
 #plt.semilogy(SNR, BER_10, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 50 init alpha =0.7 init beta = 0.05")
 #plt.semilogy(SNR, BER_11, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 5 init alpha =0.7 init beta = 0.05")
-plt.semilogy(SNR, BER_12, marker='o', markersize=6, linewidth=1.5,label="2bit fixed qNMS sharing weight, fixed damping =0.5 init alpha =0.7 init beta = 0.05")
-plt.semilogy(SNR, BER_13, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight, fixed damping =0.5 init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_12, marker='o', markersize=6, linewidth=1.5,label="2bit fixed qNMS sharing weight, fixed damping =0.5 init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_13, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight, fixed damping =0.5 init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_21, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*2 fixed eta=0.7 fixed qk= -4~4")
+#plt.semilogy(SNR, BER_22, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*10 fixed eta=0.7 fixed qk= -4~4")
 
 plt.xlabel("SNR (dB)", fontsize=12)
 plt.ylabel("Bit Error Rate (BER)", fontsize=12)
