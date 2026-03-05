@@ -157,14 +157,14 @@ class NMS(nn.Module):
 
 
 
-frame = 5000
-batch = 100
-epoch = 10
+frame = 10000
+batch = 20
+epoch = 1
 test_frame= 10000
 
 iteration_num=20
 train_snr=2.0 
-learning_rate=0.005
+learning_rate=0.001
 
 model=NMS(it=iteration_num)
 optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
@@ -185,7 +185,7 @@ print("N:", N ,", K :" , K)
 
 
 step = frame // batch # 1epoch 당 몇번 업데이트 ?
-test_step = test_frame // batch # 1epoch 당 몇번 업데이트 ?
+test_step = test_frame //100 # 1epoch 당 몇번 업데이트 ?
 
 
 #-------------------------------------ldpc 인코딩-------------------------------
@@ -252,12 +252,17 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             final_llr_hat = model(r)
             #print(final_llr_hat)
             # hard decision
+            final_llr_hat = torch.clamp(final_llr_hat, -20, 20)
             Z=hard_decision(final_llr_hat)
             mask=(orignal_code[:,:K] == Z[:,:K])
             ber = ber+ (mask == False).sum().item()
         ber=ber/(K*test_frame)
         BER_array.append(ber)
         print("SNR :",snr,"BER :",ber)
+        print("LLR min:", final_llr_hat.min().item())
+        print("LLR max:", final_llr_hat.max().item())
+        print("LLR mean:", final_llr_hat.mean().item())
+        print("LLR std:", final_llr_hat.std().item())
 
 print(BER_array)
 

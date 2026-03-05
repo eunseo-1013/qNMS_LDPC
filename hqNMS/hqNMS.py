@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 
 
 # model 1 bit
-b=3
 
 frame = 10000
 batch = 20
@@ -25,18 +24,25 @@ train_snr=2.0
 learning_rate=0.001
 
 #fixed
-eta=0
 
 #qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
+b = 2
+eta=0.5
+eta_test=0
+alpha=7
+step=(2*alpha)/4
 
 
 
 # hard quantization
-delta_v=1.6
-delta_c=0.1
-if(b==3):
-    qk=torch.tensor([-4,-3,-2,-1,0,1,2,3])# 3bit
+
+if(b==2):
+    qk = torch.arange(-alpha, alpha , step)
+elif(b==3):
+    qk = torch.arange(-alpha, alpha , step/2)
+elif(b==4):
+    qk = torch.arange(-alpha, alpha , step/4)
 
 print("QK : ",qk)
 
@@ -251,6 +257,7 @@ def Q_soft(x, eta, qk):
 
 
 
+
 def Q_hard(x, qk):
     qk = torch.tensor(qk, device=x.device, dtype=x.dtype)
     dist = (x.unsqueeze(-1) - qk.view(*([1]*x.ndim), -1)).abs() # 거리
@@ -290,11 +297,12 @@ class NMS(nn.Module):
                 E=Q_soft(E,eta,qk)
                 M = update_M(E, r)
                 M=Q_soft(M,eta,qk)
+               
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=Q_hard(E,qk)
+                E=Q_soft(E,eta_test,qk)
                 M = update_M(E, r)
-                M=Q_hard(M,qk)
+                M=Q_soft(M,eta_test,qk)
            
         return r + torch.sum(E,dim=1)
     
@@ -395,6 +403,7 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             code = 1 - 2*code # bpsk 처리 안했었네..
             r=AWGN_re_inital_r(snr,code) # f x n
             final_llr_hat = model(r)
+            final_llr_hat = torch.clamp(final_llr_hat, -20, 20)
             #print(final_llr_hat)
             # hard decision
             Z=hard_decision(final_llr_hat)
@@ -403,6 +412,10 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
         ber=ber/(K*test_frame)
         BER_array.append(ber)
         print("SNR :",snr,"BER :",ber)
+        print("LLR min:", final_llr_hat.min().item())
+        print("LLR max:", final_llr_hat.max().item())
+        print("LLR mean:", final_llr_hat.mean().item())
+        print("LLR std:", final_llr_hat.std().item())
 
 print(BER_array)
 
