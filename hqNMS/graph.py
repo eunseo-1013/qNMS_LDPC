@@ -33,8 +33,11 @@ BER_22=[0.1305872685185185, 0.11661782407407408, 0.10233101851851852, 0.08815347
 BER_23=[0.1846349537037037, 0.1675976851851852, 0.15086064814814815, 0.13350625, 0.11548981481481481, 0.09564305555555555, 0.0682449074074074, 0.027571759259259258, 0.004409722222222222]
 BER_24=[0.1312550925925926, 0.11739606481481482, 0.103875, 0.0910662037037037, 0.07876782407407408, 0.06669212962962963, 0.053924537037037035, 0.037757407407407406, 0.025106481481481483]
 BER_25=[0.13732337962962962, 0.12352314814814815, 0.1097037037037037, 0.0961449074074074, 0.08222152777777778, 0.06851180555555555, 0.05103425925925926, 0.022687962962962962, 0.0047888888888888885]
-batch = 50
-epoch = 10
+
+BER_26=[0.23860046296296297, 0.21828634259259258, 0.19631550925925925, 0.17395, 0.15123425925925926, 0.12693958333333333, 0.10077893518518519, 0.06252569444444445, 0.017503935185185185]
+
+batch = 20
+epoch = 1
 test_frame= 10000
 
 iteration_num=20
@@ -52,27 +55,23 @@ plt.figure(figsize=(10, 7))
 # semilogy
 plt.semilogy(SNR, BER_0, marker='o', markersize=6, linewidth=1.5,label=" NMS - spatial weight sharing,  init alpha =0.7 init beta = 0.05")
 #plt.semilogy(SNR, BER_15, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight   init alpha =0.7 init beta = 0.05" )
-#plt.semilogy(SNR, BER_17, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight , fixed damping = 0.4 init alpha =0.7 init beta = 0.05" )
-#plt.semilogy(SNR, BER_19, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight , init damping = 0.4 init alpha =0.7 init beta = 0.05" )
-#plt.semilogy(SNR, BER_20, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight , init damping = 0.3 init alpha =0.7 init beta = 0.05" )
 #plt.semilogy(SNR, BER_2, marker='o', markersize=6, linewidth=1.5,label=" SMS , fixed alpha =0.7 fixed beta = 0.05")
 #plt.semilogy(SNR, BER_3, marker='o', markersize=6, linewidth=1.5,label=" MS(float) ")
+
+
 #plt.semilogy(SNR, BER_7, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS - spatial weight sharing , fixed eta=0.7 fixed qk= -4~4")
 plt.semilogy(SNR, BER_14, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
 plt.semilogy(SNR, BER_23, marker='o', markersize=6, linewidth=1.5,label="  ** batch/2, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
 #plt.semilogy(SNR, BER_24, marker='o', markersize=6, linewidth=1.5,label="  ** batch/10, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
 plt.semilogy(SNR, BER_25, marker='o', markersize=6, linewidth=1.5,label="  ** batch/5, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
-#plt.semilogy(SNR, BER_16, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight , fixed damping = 0.4 fixed eta=0.7 fixed qk= -4~4")
-#plt.semilogy(SNR, BER_18, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight , init damping = 0.4 fixed eta=0.7 fixed qk= -4~4")
-#plt.semilogy(SNR, BER_6, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , init eta=0.7 init qk= -4~4")
+plt.semilogy(SNR, BER_26, marker='o', markersize=6, linewidth=1.5,label=" ** hard quantization 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
 #plt.semilogy(SNR, BER_4, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -4~4")
 #plt.semilogy(SNR, BER_5, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -8~8")
 #plt.semilogy(SNR, BER_8, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , init alpha =0.7 init beta = 0.05")
 #plt.semilogy(SNR, BER_9, marker='o', markersize=6, linewidth=1.5,label="2bit fixed qNMS sharing weight ")
 #plt.semilogy(SNR, BER_10, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 50 init alpha =0.7 init beta = 0.05")
 #plt.semilogy(SNR, BER_11, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 5 init alpha =0.7 init beta = 0.05")
-#plt.semilogy(SNR, BER_12, marker='o', markersize=6, linewidth=1.5,label="2bit fixed qNMS sharing weight, fixed damping =0.5 init alpha =0.7 init beta = 0.05")
-#plt.semilogy(SNR, BER_13, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight, fixed damping =0.5 init alpha =0.7 init beta = 0.05")
+
 #plt.semilogy(SNR, BER_21, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*2 fixed eta=0.7 fixed qk= -4~4")
 #plt.semilogy(SNR, BER_22, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*10 fixed eta=0.7 fixed qk= -4~4")
 
@@ -84,23 +83,3 @@ plt.grid(True, which="both", ls="-", alpha=0.5)
 plt.legend(loc='best', fontsize=10)
 plt.show()
 
-
-# 일반그래프
-'''
-
-
-
-
-step=30
-plt.figure()
-plt.plot(x[::step], q_0[::step], label=f'shaping_factor=0.5')
-plt.plot(x[::step], q_1[::step], label=f'shaping_factor=0.05')
-plt.plot(x[::step], q_2[::step], label='shaping_factor=0.005')
-plt.xlabel("x")
-plt.ylabel("Qn(x)")
-plt.legend()
-plt.title(f'qk = [-1,-1/3,1/3,1] b=2')
-plt.grid(True)
-plt.show()
-
-'''
