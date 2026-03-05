@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 # model 1 bit
-b=2
+b=3
 
 frame = 10000
 batch = 20
@@ -26,7 +26,18 @@ learning_rate=0.001
 
 #fixed
 eta=0.7
-qk=torch.linspace(-4, 4, 2**b)
+qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
+
+
+
+
+# hard quantization
+delta_v=1.6
+delta_c=0.1
+if(b==3):
+    qk=torch.tensor([-4,-3,-2,-1,0,1,2,3])# 3bit
+
+print("QK : ",qk)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -153,31 +164,6 @@ def update_M(E, r):
     
     return M
 
-'''
-
-def Q(x, eta_sq, qk):
-    sum_top=0
-    sum_bottom=0
-    for i in range(2**b):
-        q=qk[i]
-        upper=((x-q)**2)/(2*(eta_sq**2))
-        sum_top += q*torch.exp(-upper)
-        sum_bottom+=torch.exp(-upper)
-    #print("최소값 ....", sum_bottom.min())
-    #print("최소값 .... upper", sum_top.min())
-    return sum_top/(sum_bottom+1e-12)
-
-
-'''
-# 병렬로 바꾸기
-def Q(x, eta, qk):
-    logits = -((x.unsqueeze(-1).to(device) - qk.to(device))**2) / (2 * (eta**2) + 1e-12)
-    # 파이토치의 최적화된 softmax 사용
-    weights = torch.nn.functional.softmax(logits, dim=-1)
-    return torch.sum(weights.to(device) * qk.to(device), dim=-1)
-
-
-
 
 
 
@@ -252,6 +238,33 @@ def c_to_v(M,alpha,beta):
     
     #E = alpha * E_sign * torch.max(torch.zeros_like(E_abs),E_abs-beta)
     return E * H 
+
+
+
+# 병렬로 바꾸기
+def Q_soft(x, eta, qk):
+    logits = -((x.unsqueeze(-1).to(device) - qk.to(device))**2) / (2 * (eta**2) + 1e-12)
+    # 파이토치의 최적화된 softmax 사용
+    weights = torch.nn.functional.softmax(logits, dim=-1)
+    return torch.sum(weights.to(device) * qk. to(device), dim=-1)
+
+
+
+def Q_hard(x, qk):
+    qk = torch.tensor(qk, device=x.device, dtype=x.dtype)
+    dist = (x.unsqueeze(-1) - qk.view(*([1]*x.ndim), -1)).abs() # 거리
+    idx = dist.argmin(dim=-1)
+    xq = qk[idx]
+    Hb = H.bool()
+    Hb = Hb.unsqueeze(0).expand(xq.shape[0],-1,-1)
+    '''
+            while Hb.ndim < xq.ndim:
+        Hb = Hb.unsqueeze(0)
+        '''
+    return xq * Hb  # non-edge는 0           
+
+
+
 # decoder 1
 
 class NMS(nn.Module):
@@ -272,9 +285,10 @@ class NMS(nn.Module):
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
             E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-            E=Q(E,eta,qk)
-            M=update_M(E, r)
-            M=Q(M,eta,qk)
+            E=Q_soft(E,eta,qk)
+            M = update_M(E, r)
+            M=Q_soft(M,eta,qk)
+           
         return r + torch.sum(E,dim=1)
     
 
@@ -337,8 +351,8 @@ for i in range(epoch):
         loss.backward()
         optimizer.step() 
    
-    print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
-    print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
+    #print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
+    #print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
     #print("epoch : " , i, "updated qk : ", model.qk.data)  # 1epoch 당  알파 업데이트 값
     #print("epoch : " , i, "updated eta : ", model.eta.data)  # 1epoch 당  알파 업데이트 값
     
@@ -347,7 +361,7 @@ for i in range(epoch):
 
 print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
 
-print("updated alpha : ", model.alpha.shape)  # 최종  알파 업데이트 값
+print("updated alpha shape : ", model.alpha.shape)  # 최종  알파 업데이트 값
 
 print("test start!") 
 
