@@ -25,8 +25,9 @@ train_snr=2.0
 learning_rate=0.001
 
 #fixed
-eta=0.7
-qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
+eta=0
+
+#qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
 
 
@@ -284,10 +285,16 @@ class NMS(nn.Module):
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
-            E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-            E=Q_soft(E,eta,qk)
-            M = update_M(E, r)
-            M=Q_soft(M,eta,qk)
+            if self.train:
+                E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
+                E=Q_soft(E,eta,qk)
+                M = update_M(E, r)
+                M=Q_soft(M,eta,qk)
+            else:
+                E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
+                E=Q_hard(E,qk)
+                M = update_M(E, r)
+                M=Q_hard(M,qk)
            
         return r + torch.sum(E,dim=1)
     
