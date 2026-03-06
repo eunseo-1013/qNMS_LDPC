@@ -35,7 +35,8 @@ BER_24=[0.1312550925925926, 0.11739606481481482, 0.103875, 0.0910662037037037, 0
 BER_25=[0.13732337962962962, 0.12352314814814815, 0.1097037037037037, 0.0961449074074074, 0.08222152777777778, 0.06851180555555555, 0.05103425925925926, 0.022687962962962962, 0.0047888888888888885]
 
 BER_26=[0.23860046296296297, 0.21828634259259258, 0.19631550925925925, 0.17395, 0.15123425925925926, 0.12693958333333333, 0.10077893518518519, 0.06252569444444445, 0.017503935185185185]
-
+BER_27=[0.14539930555555555, 0.13198194444444444, 0.11812962962962963, 0.1036337962962963, 0.08796365740740741, 0.07167847222222222, 0.05248333333333333, 0.030325694444444443, 0.012945370370370371]
+BER_28=[0.13100972222222224, 0.11701273148148149, 0.10285439814814815, 0.08798078703703703, 0.07170023148148148, 0.05161550925925926, 0.025490046296296295, 0.005637268518518519, 0.00047013888888888886]
 batch = 20
 epoch = 1
 test_frame= 10000
@@ -46,34 +47,31 @@ train_snr=2.0
 
 
 
+#  ** batch/5, frame *2, epoch = 1  이 아래는 다 이 상황으로 돌린 것임
+'''
+frame = 10000
+batch = 20
+epoch = 1
+test_frame= 10000
 
+iteration_num=20
 
+train_snr=2.0 
+learning_rate=0.001
+
+#fixed
+eta=0
+'''
 # 로그 그래프
 
 plt.figure(figsize=(10, 7))
+plt.semilogy(SNR, BER_28, marker='o', markersize=6, linewidth=1.5,label="NMS")
+plt.semilogy(SNR, BER_25, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS, fixed eta=0.7 fixed qk= -4~4") #
+# train - soft quantization (eta = 0 ) + edge sharing weight
+plt.semilogy(SNR, BER_26, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS ")
+plt.semilogy(SNR, BER_27, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS ")  # -4 -3 -2 0 1 2 3 ( 8 bit )
 
-# semilogy
-plt.semilogy(SNR, BER_0, marker='o', markersize=6, linewidth=1.5,label=" NMS - spatial weight sharing,  init alpha =0.7 init beta = 0.05")
-#plt.semilogy(SNR, BER_15, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight   init alpha =0.7 init beta = 0.05" )
-#plt.semilogy(SNR, BER_2, marker='o', markersize=6, linewidth=1.5,label=" SMS , fixed alpha =0.7 fixed beta = 0.05")
-#plt.semilogy(SNR, BER_3, marker='o', markersize=6, linewidth=1.5,label=" MS(float) ")
 
-
-#plt.semilogy(SNR, BER_7, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS - spatial weight sharing , fixed eta=0.7 fixed qk= -4~4")
-plt.semilogy(SNR, BER_14, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
-plt.semilogy(SNR, BER_23, marker='o', markersize=6, linewidth=1.5,label="  ** batch/2, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
-#plt.semilogy(SNR, BER_24, marker='o', markersize=6, linewidth=1.5,label="  ** batch/10, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
-plt.semilogy(SNR, BER_25, marker='o', markersize=6, linewidth=1.5,label="  ** batch/5, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
-plt.semilogy(SNR, BER_26, marker='o', markersize=6, linewidth=1.5,label=" ** hard quantization 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
-#plt.semilogy(SNR, BER_4, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -4~4")
-#plt.semilogy(SNR, BER_5, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -8~8")
-#plt.semilogy(SNR, BER_8, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , init alpha =0.7 init beta = 0.05")
-#plt.semilogy(SNR, BER_9, marker='o', markersize=6, linewidth=1.5,label="2bit fixed qNMS sharing weight ")
-#plt.semilogy(SNR, BER_10, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 50 init alpha =0.7 init beta = 0.05")
-#plt.semilogy(SNR, BER_11, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 5 init alpha =0.7 init beta = 0.05")
-
-#plt.semilogy(SNR, BER_21, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*2 fixed eta=0.7 fixed qk= -4~4")
-#plt.semilogy(SNR, BER_22, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*10 fixed eta=0.7 fixed qk= -4~4")
 
 plt.xlabel("SNR (dB)", fontsize=12)
 plt.ylabel("Bit Error Rate (BER)", fontsize=12)

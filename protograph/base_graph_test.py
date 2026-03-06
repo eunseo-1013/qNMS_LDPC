@@ -27,3 +27,15 @@ print(torch.linspace(-4, 4, 4))
 import torch
 print(torch.cuda.is_available()) 
 # 이게 False라면? -> NVIDIA 드라이버나 CUDA Toolkit 버전이 설치된 PyTorch와 안 맞는 겁니다.
+
+
+lst=[]
+
+for i in range(-31,31):
+    lst.append(i)
+print(lst)
+
+
+
+
+
