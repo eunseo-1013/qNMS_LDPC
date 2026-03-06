@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # model 1 bit
 
-frame = 10000
+frame = 1000000
 batch = 20
 epoch = 1
 test_frame= 10000
@@ -30,7 +30,7 @@ learning_rate=0.001
 b = 2
 eta=0.5
 eta_test=0
-alpha=7
+alpha=4
 step=(2*alpha)/4
 
 
