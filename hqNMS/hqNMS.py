@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # model 1 bit
 
-frame = 1000000
+frame = 1000000 # 10 **2 임! ( 원래 코드 대비 )
 batch = 20
 epoch = 1
 test_frame= 10000
@@ -34,15 +34,20 @@ alpha=4
 step=(2*alpha)/4
 
 
-
 # hard quantization
+qk = torch.arange(-alpha, alpha , step/(2**(b-2)))
 
+
+'''
 if(b==2):
     qk = torch.arange(-alpha, alpha , step)
 elif(b==3):
-    qk = torch.arange(-alpha, alpha , step/2)
+    qk = torch.arange(-alpha, alpha , step/(2**(b-2)))
 elif(b==4):
     qk = torch.arange(-alpha, alpha , step/4)
+
+
+'''
 
 print("QK : ",qk)
 
