@@ -37,6 +37,21 @@ BER_25=[0.13732337962962962, 0.12352314814814815, 0.1097037037037037, 0.09614490
 BER_26=[0.23860046296296297, 0.21828634259259258, 0.19631550925925925, 0.17395, 0.15123425925925926, 0.12693958333333333, 0.10077893518518519, 0.06252569444444445, 0.017503935185185185]
 BER_27=[0.14539930555555555, 0.13198194444444444, 0.11812962962962963, 0.1036337962962963, 0.08796365740740741, 0.07167847222222222, 0.05248333333333333, 0.030325694444444443, 0.012945370370370371]
 BER_28=[0.13100972222222224, 0.11701273148148149, 0.10285439814814815, 0.08798078703703703, 0.07170023148148148, 0.05161550925925926, 0.025490046296296295, 0.005637268518518519, 0.00047013888888888886]
+BER_29=[0.14539953703703704, 0.1319837962962963, 0.11813125, 0.10360833333333333, 0.08793680555555555, 0.07152314814814814, 0.051429166666666665, 0.025400925925925927, 0.00602037037037037]
+BER_30=[0.13064166666666666, 0.11730949074074074, 0.10437337962962963, 0.09152268518518518, 0.07932708333333334, 0.06850416666666667, 0.05886736111111111, 0.050236805555555555, 0.04279884259259259]
+
+BER_31=[0.13045578703703703, 0.1168875, 0.10325439814814814, 0.0894261574074074, 0.07565277777777778, 0.06070092592592593, 0.04219814814814815, 0.022913657407407407, 0.012900462962962963] 
+BER_32=[0.13088217592592594, 0.11694212962962963, 0.10276134259259259, 0.08794699074074074, 0.0718, 0.05261689814814815, 0.029397916666666666, 0.011291898148148148, 0.004697916666666667]
+BER_33=[0.1309914351851852, 0.11700162037037037, 0.10286111111111111, 0.08794027777777778, 0.07181018518518519, 0.0521599537037037, 0.027799074074074073, 0.009077777777777778, 0.003045601851851852]
+BER_34=[0.13063912037037037, 0.11730416666666667, 0.10434699074074075, 0.09141458333333333, 0.07896944444444444, 0.06773240740740741, 0.057613657407407405, 0.05032962962962963, 0.04013564814814815]
+
+BER_35=[0.13049791666666666, 0.11702175925925926, 0.10368009259259259, 0.09033356481481482, 0.07718240740740741, 0.06427337962962963, 0.049774074074074075, 0.027672222222222223, 0.006262268518518519]
+BER_36=[0.13042916666666668, 0.11669444444444445, 0.10268055555555555, 0.08822708333333333, 0.07255902777777777, 0.0532912037037037, 0.027453935185185185, 0.006270601851851852, 0.0005324074074074074]
+BER_37=[0.1305164351851852, 0.11674537037037037, 0.10280601851851852, 0.08861342592592593, 0.07370138888888889, 0.05802361111111111, 0.04147592592592592, 0.02657638888888889, 0.017162268518518518]
+BER_38=[0.4871037037037037, 0.47973310185185186, 0.4709087962962963, 0.46107939814814813, 0.4518212962962963, 0.4390759259259259, 0.42137685185185186, 0.3956710648148148, 0.3618106481481482]
+BER_39=[0.1309810185185185, 0.11706435185185185, 0.10308611111111111, 0.08882592592592592, 0.07423726851851851, 0.060163425925925926, 0.04688263888888889, 0.034721527777777775, 0.024883564814814813]
+BER_40=[0.13045555555555555, 0.11694675925925926, 0.10354976851851852, 0.09006157407407407, 0.07678842592592593, 0.06342800925925926, 0.04741666666666667, 0.02585925925925926, 0.011758564814814815]
+
 batch = 20
 epoch = 1
 test_frame= 10000
@@ -65,13 +80,29 @@ eta=0
 # 로그 그래프
 
 plt.figure(figsize=(10, 7))
-plt.semilogy(SNR, BER_28, marker='o', markersize=6, linewidth=1.5,label="NMS")
-plt.semilogy(SNR, BER_25, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS, fixed eta=0.7 fixed qk= -4~4") #
-# train - soft quantization (eta = 0 ) + edge sharing weight
-plt.semilogy(SNR, BER_26, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS ")
-plt.semilogy(SNR, BER_27, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS ")  # -4 -3 -2 0 1 2 3 ( 8 bit )
+
+# semilogy
+plt.semilogy(SNR, BER_0, marker='o', markersize=6, linewidth=1.5,label=" NMS - spatial weight sharing,  init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_15, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight   init alpha =0.7 init beta = 0.05" )
+#plt.semilogy(SNR, BER_2, marker='o', markersize=6, linewidth=1.5,label=" SMS , fixed alpha =0.7 fixed beta = 0.05")
+#plt.semilogy(SNR, BER_3, marker='o', markersize=6, linewidth=1.5,label=" MS(float) ")
 
 
+#plt.semilogy(SNR, BER_7, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS - spatial weight sharing , fixed eta=0.7 fixed qk= -4~4")
+plt.semilogy(SNR, BER_14, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
+plt.semilogy(SNR, BER_23, marker='o', markersize=6, linewidth=1.5,label="  ** batch/2, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
+#plt.semilogy(SNR, BER_24, marker='o', markersize=6, linewidth=1.5,label="  ** batch/10, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
+plt.semilogy(SNR, BER_25, marker='o', markersize=6, linewidth=1.5,label="  ** batch/5, frame *2, epoch = 1 , 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
+plt.semilogy(SNR, BER_26, marker='o', markersize=6, linewidth=1.5,label=" ** hard quantization 2bit qNMS edge sharing weight, fixed eta=0.7 fixed qk= -4~4")
+#plt.semilogy(SNR, BER_4, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -4~4")
+#plt.semilogy(SNR, BER_5, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , init eta=0.7 init qk= -8~8")
+#plt.semilogy(SNR, BER_8, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_9, marker='o', markersize=6, linewidth=1.5,label="2bit fixed qNMS sharing weight ")
+#plt.semilogy(SNR, BER_10, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 50 init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_11, marker='o', markersize=6, linewidth=1.5,label=" NMS sharing weight , epoch = 5 init alpha =0.7 init beta = 0.05")
+
+#plt.semilogy(SNR, BER_21, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*2 fixed eta=0.7 fixed qk= -4~4")
+#plt.semilogy(SNR, BER_22, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS edge sharing weight, train_data*10 fixed eta=0.7 fixed qk= -4~4")
 
 plt.xlabel("SNR (dB)", fontsize=12)
 plt.ylabel("Bit Error Rate (BER)", fontsize=12)
