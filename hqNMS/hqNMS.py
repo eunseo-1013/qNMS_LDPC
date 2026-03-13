@@ -36,7 +36,7 @@ step=(2*alpha)/4
 
 # hard quantization
 qk = torch.arange(-alpha, alpha , step/(2**(b-2)))
-
+ # 이거 자동화 해야함 step 넘 코드 더럽워~~~~~
 
 '''
 if(b==2):
