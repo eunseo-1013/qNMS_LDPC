@@ -234,8 +234,8 @@ for i in range(epoch):
 print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
 
 print("test start!") 
-model.eval()
 
+model.eval()
 
 
 
@@ -273,5 +273,3 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
 print(BER_array)
 print(FER_array)
 
-
- 

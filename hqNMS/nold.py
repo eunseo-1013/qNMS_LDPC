@@ -13,11 +13,7 @@ import matplotlib.pyplot as plt
 
 # model 1 bit
 
-<<<<<<< HEAD
-frame = 100000
-=======
-frame = 10000 # 10 **2 임! ( 원래 코드 대비 )
->>>>>>> 64c2a2d50e3d773dcacd58b5dbdaaef01d1e1d84
+frame = 10000 
 batch = 20
 epoch = 1
 test_frame= 10000
@@ -35,31 +31,12 @@ b_c = 2
 b_v = 6
 eta=0.5
 eta_test=0
-alpha=4
-step=(2*alpha)/4
 
+
+alpha_iteration=[]
+llr_scaling_factor=[]
 
 # hard quantization
-qk_c = torch.arange(-alpha, alpha , step/(2**(b_c-2))) 
-qk_v = torch.arange(-alpha, alpha , step/(2**(b_v-2)))
-
-'''
-if(b==2):
-    qk = torch.arange(-alpha, alpha , step)
-elif(b==3):
-    qk = torch.arange(-alpha, alpha , step/(2**(b-2)))
-elif(b==4):
-    qk = torch.arange(-alpha, alpha , step/4)
-
-
-'''
-
-
-print("QK_c : ",qk_c)
-print("QK_v : ",qk_v)
-
-
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("device = ",device)
 
@@ -176,6 +153,8 @@ def update_M(M,E):
     M=M.sum(except_self_E,dim=1)+r
     return M
     '''
+
+
 def update_M(E, r):
 
     sum_E = torch.sum(E, dim=1, keepdim=True)
@@ -284,9 +263,16 @@ def Q_hard(x, qk):
         '''
     return xq * Hb  # non-edge는 0           
 
-
+# scaling _ iteration 별로 할려면 어케 해야되냐~~
 
 # decoder 1
+
+alpha=2**b_c 
+step=(2*alpha)/4
+
+
+qk_c = torch.arange(-alpha, alpha, step/(2**(b_c-2)))  # 여긴 무조건 고정 값
+qk_v = torch.arange(-alpha,alpha , step/(2**(b_v-2)))
 
 class NMS(nn.Module):
     def __init__(self,it=3):
@@ -294,23 +280,29 @@ class NMS(nn.Module):
         self.iteration=it
         self.alpha=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
         self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.05)# edge-type 별 가중치 적용
+        
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
-    
+        num_levels = 2**b_c
+        # 이거 2bit 일때 aksdlek??
+        self.iteration_qk_c=nn.Parameter(torch.tensor([-4.0, -2.0, 0.0, 2.0]).repeat(self.iteration, 1)) # iter 별 가중치 적용
         #uniform 초기값
         #qk_init = torch.linspace(-4, 4, num_levels) 
         #self.qk = nn.Parameter(qk_init)
     def forward(self,r): #llr 계산
+        
         M=torch.zeros(size=(batch,H.shape[0],H.shape[1]),device=device) #  v -> c ( M(n-k)  x N)
         E=torch.zeros(size=(batch,H.shape[0],H.shape[1]),device=device) #  c -> v
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
-            # c -> v 
+            # c -> v
+
+            # iteration 퀀타 값
+
             if self.train:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
                 E=Q_soft(E,eta,qk_c)
                 M = update_M(E, r)
                 M=Q_soft(M,eta,qk_v)
-               
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
                 E=Q_soft(E,eta_test,qk_c)
@@ -391,6 +383,7 @@ print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
 
 print("updated alpha shape : ", model.alpha.shape)  # 최종  알파 업데이트 값
 
+print("updated alpha shape : ", model.iteration_qk_c.data) 
 print("test start!") 
 
 

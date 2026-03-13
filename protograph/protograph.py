@@ -12,21 +12,19 @@ import matplotlib.pyplot as plt
 
 
 # model 1 bit
-b=2
-
-frame = 5000
-batch = 100
-epoch = 10
+frame = 10000 # *10 배 한 것임.....
+batch = 20
+epoch = 1
 test_frame= 10000
 
 iteration_num=20
 
 train_snr=2.0 
-learning_rate=0.005
+learning_rate=0.001
 
 #fixed
-eta=0.7
-qk=torch.linspace(-4, 4, 2**b)
+eta=0.5
+#qk=torch.linspace(-4, 4, 2**b)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -261,7 +259,7 @@ class NMS(nn.Module):
         self.alpha=nn.Parameter(torch.ones(sharing_weight_shape[0],sharing_weight_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
         self.beta=nn.Parameter(torch.ones(sharing_weight_shape[0],sharing_weight_shape[1],self.iteration)*0.05)# edge-type 별 가중치 적용
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
-        num_levels = 2**b
+        #num_levels = 2**b
         #uniform 초기값
         #qk_init = torch.linspace(-4, 4, num_levels) 
         #self.qk = nn.Parameter(qk_init)
@@ -363,10 +361,13 @@ model.eval()
 
 
 
+FER_array=[]
+
 #----------- 성능 평가 -------------
 with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
     for snr in SNR:
         ber=0
+        fer=0
         for _ in range(test_step):
             K_bit = make_k_bit(K,batch) # f x k
             code = K_bit.float()@G.float() # (f x k) x (k x n) == (f x n)
@@ -375,14 +376,22 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             code = 1 - 2*code # bpsk 처리 안했었네..
             r=AWGN_re_inital_r(snr,code) # f x n
             final_llr_hat = model(r)
+            final_llr_hat = torch.clamp(final_llr_hat, -20, 20)
             #print(final_llr_hat)
             # hard decision
             Z=hard_decision(final_llr_hat)
             mask=(orignal_code == Z)
             ber = ber+ (orignal_code[:,:K]!=Z[:,:K]).sum().item()
+            fer = fer + ((orignal_code[:,:K]!=Z[:,:K]).any(dim=1)).sum().item()
+            
         ber=ber/(K*test_frame)
         BER_array.append(ber)
-        print("SNR :",snr,"BER :",ber)
+        fer=fer/test_frame
+        FER_array.append(fer)
+
+        print("SNR :",snr,"BER :",ber,"FER :",fer)
+
 
 print(BER_array)
+print(FER_array)
 
