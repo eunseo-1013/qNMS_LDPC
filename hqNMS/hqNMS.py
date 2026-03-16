@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # model 1 bit
 
-frame = 1000000 # 10 **2 임! ( 원래 코드 대비 )
+frame = 10000 # 10 **2 임! ( 원래 코드 대비 )
 batch = 20
 epoch = 1
 test_frame= 10000
@@ -27,7 +27,8 @@ learning_rate=0.001
 
 #qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
-b = 2
+b_c = 2
+b_v = 6
 eta=0.5
 eta_test=0
 alpha=4
@@ -35,8 +36,13 @@ step=(2*alpha)/4
 
 
 # hard quantization
+<<<<<<< HEAD
 qk = torch.arange(-alpha, alpha , step/(2**(b-2)))
  # 이거 자동화 해야함 step 넘 코드 더럽워~~~~~
+=======
+qk_c = torch.arange(-alpha, alpha , step/(2**(b_c-2))) 
+qk_v = torch.arange(-alpha, alpha , step/(2**(b_v-2)))
+>>>>>>> 64c2a2d50e3d773dcacd58b5dbdaaef01d1e1d84
 
 '''
 if(b==2):
@@ -49,7 +55,10 @@ elif(b==4):
 
 '''
 
-print("QK : ",qk)
+
+print("QK_c : ",qk_c)
+print("QK_v : ",qk_v)
+
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -287,7 +296,7 @@ class NMS(nn.Module):
         self.alpha=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
         self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.05)# edge-type 별 가중치 적용
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
-        num_levels = 2**b
+    
         #uniform 초기값
         #qk_init = torch.linspace(-4, 4, num_levels) 
         #self.qk = nn.Parameter(qk_init)
@@ -299,15 +308,15 @@ class NMS(nn.Module):
             # c -> v 
             if self.train:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=Q_soft(E,eta,qk)
+                E=Q_soft(E,eta,qk_c)
                 M = update_M(E, r)
-                M=Q_soft(M,eta,qk)
+                M=Q_soft(M,eta,qk_v)
                
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=Q_soft(E,eta_test,qk)
+                E=Q_soft(E,eta_test,qk_c)
                 M = update_M(E, r)
-                M=Q_soft(M,eta_test,qk)
+                M=Q_soft(M,eta_test,qk_v)
            
         return r + torch.sum(E,dim=1)
     
