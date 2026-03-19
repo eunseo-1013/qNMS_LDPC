@@ -3,14 +3,7 @@ from ldpc import H_to_tensor
 from ldpc import RREF
 from ldpc import make_G_using_H
 
-'''
-from msa import AWGN_re_inital_r
-from msa import initial_M
-from msa import cal_L
-from msa import c_to_v
-from msa import hard_decision
-from msa import update_M
-'''
+
 
 import torch
 import torch.nn as nn

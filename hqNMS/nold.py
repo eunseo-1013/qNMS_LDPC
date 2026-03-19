@@ -242,10 +242,10 @@ def c_to_v(M,alpha,beta):
 
 # 병렬로 바꾸기
 def Q_soft(x, eta, qk):
-    logits = -((x.unsqueeze(-1).to(device) - qk.to(device))**2) / (2 * (eta**2) + 1e-12)
+    logits = -((x.unsqueeze(-1).to(device) - qk)**2) / (2 * (eta**2) + 1e-12)
     # 파이토치의 최적화된 softmax 사용
     weights = torch.nn.functional.softmax(logits, dim=-1)
-    return torch.sum(weights.to(device) * qk. to(device), dim=-1)
+    return torch.sum(weights.to(device) * qk.to(device), dim=-1)
 
 
 
@@ -271,7 +271,7 @@ alpha=2**b_c
 step=(2*alpha)/4
 
 
-qk_c = torch.arange(-alpha, alpha, step/(2**(b_c-2)))  # 여긴 무조건 고정 값
+#qk_c = torch.arange(-alpha, alpha, step/(2**(b_c-2)))  # 여긴 무조건 고정 값
 qk_v = torch.arange(-alpha,alpha , step/(2**(b_v-2)))
 
 class NMS(nn.Module):
@@ -284,7 +284,8 @@ class NMS(nn.Module):
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
         num_levels = 2**b_c
         # 이거 2bit 일때 aksdlek??
-        self.iteration_qk_c=nn.Parameter(torch.tensor([-4.0, -2.0, 0.0, 2.0]).repeat(self.iteration, 1)) # iter 별 가중치 적용
+        iteration_qk_c=(torch.tensor([-4.0, -2.0, 0.0, 2.0])).repeat(self.iteration, 1)
+        self.iteration_qk_c=nn.Parameter(iteration_qk_c)
         #uniform 초기값
         #qk_init = torch.linspace(-4, 4, num_levels) 
         #self.qk = nn.Parameter(qk_init)
@@ -295,17 +296,20 @@ class NMS(nn.Module):
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v
+        
 
             # iteration 퀀타 값
 
-            if self.train:
+            if self.training:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=Q_soft(E,eta,qk_c)
+                E=Q_soft(E,eta,self.iteration_qk_c[iter])
                 M = update_M(E, r)
                 M=Q_soft(M,eta,qk_v)
+                #print("qk grad:", model.iteration_qk_c.grad)
+                #print("qk value:", model.iteration_qk_c.data)
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=Q_soft(E,eta_test,qk_c)
+                E=Q_soft(E,eta_test,self.iteration_qk_c[iter])
                 M = update_M(E, r)
                 M=Q_soft(M,eta_test,qk_v)
            
@@ -369,6 +373,7 @@ for i in range(epoch):
         llr_hat= - model(r)
         loss=loss_fn(llr_hat[:,:],orignal_code)
         loss.backward()
+        print(f"Grad check: {model.iteration_qk_c.grad[0]}")
         optimizer.step() 
    
     #print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
