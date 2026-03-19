@@ -13,11 +13,7 @@ import matplotlib.pyplot as plt
 
 # model 1 bit
 
-<<<<<<< HEAD
-frame = 100000
-=======
-frame = 10000 # 10 **2 임! ( 원래 코드 대비 )
->>>>>>> 64c2a2d50e3d773dcacd58b5dbdaaef01d1e1d84
+frame = 1000 # 10 **2 임! ( 원래 코드 대비 )
 batch = 20
 epoch = 1
 test_frame= 10000
@@ -35,18 +31,14 @@ b_c = 2
 b_v = 6
 eta=0.5
 eta_test=0
-alpha=4
+alpha=2**b_c 
 step=(2*alpha)/4
 
 
-# hard quantization
-<<<<<<< HEAD
-qk = torch.arange(-alpha, alpha , step/(2**(b-2)))
- # 이거 자동화 해야함 step 넘 코드 더럽워~~~~~
-=======
-qk_c = torch.arange(-alpha, alpha , step/(2**(b_c-2))) 
-qk_v = torch.arange(-alpha, alpha , step/(2**(b_v-2)))
->>>>>>> 64c2a2d50e3d773dcacd58b5dbdaaef01d1e1d84
+qk_c = torch.arange(-alpha, alpha, step/(2**(b_c-2)))  # 여긴 무조건 고정 값! 
+qk_v = torch.arange(-alpha,alpha , step/(2**(b_v-2)))
+
+
 
 '''
 if(b==2):
@@ -60,8 +52,7 @@ elif(b==4):
 '''
 
 
-print("QK_c : ",qk_c)
-print("QK_v : ",qk_v)
+
 
 
 
@@ -277,7 +268,7 @@ def Q_soft(x, eta, qk):
 
 
 def Q_hard(x, qk):
-    qk = torch.tensor(qk, device=x.device, dtype=x.dtype)
+    qk = qk.to(device=x.device, dtype=x.dtype)
     dist = (x.unsqueeze(-1) - qk.view(*([1]*x.ndim), -1)).abs() # 거리
     idx = dist.argmin(dim=-1)
     xq = qk[idx]
@@ -291,6 +282,8 @@ def Q_hard(x, qk):
 
 
 
+
+
 # decoder 1
 
 class NMS(nn.Module):
@@ -300,28 +293,37 @@ class NMS(nn.Module):
         self.alpha=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
         self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.05)# edge-type 별 가중치 적용
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
-    
+        self.llr_scaling=nn.Parameter(torch.ones(self.iteration)*1) # 일단 ctov에만 적용해야겠는데...
         #uniform 초기값
         #qk_init = torch.linspace(-4, 4, num_levels) 
         #self.qk = nn.Parameter(qk_init)
     def forward(self,r): #llr 계산
+        # hard quantization
+       
         M=torch.zeros(size=(batch,H.shape[0],H.shape[1]),device=device) #  v -> c ( M(n-k)  x N)
         E=torch.zeros(size=(batch,H.shape[0],H.shape[1]),device=device) #  c -> v
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
-            if self.train:
+            
+            if self.training:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
+                E=E/self.llr_scaling[iter]
                 E=Q_soft(E,eta,qk_c)
+                E=E*self.llr_scaling[iter]
                 M = update_M(E, r)
                 M=Q_soft(M,eta,qk_v)
+                
+
                
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
+                E=E/self.llr_scaling[iter]
                 E=Q_soft(E,eta_test,qk_c)
+                E=E*self.llr_scaling[iter]
                 M = update_M(E, r)
                 M=Q_soft(M,eta_test,qk_v)
-           
+               
         return r + torch.sum(E,dim=1)
     
 
@@ -337,6 +339,9 @@ torch.manual_seed(42)
 
 
 SNR = [1.0, 1.5, 2.0, 2.5, 3.0,3.5, 4.0, 4.5, 5.0]
+
+
+
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
 K=N*int(filename[12])/int(filename[13])
@@ -395,7 +400,7 @@ for i in range(epoch):
 print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
 
 print("updated alpha shape : ", model.alpha.shape)  # 최종  알파 업데이트 값
-
+print("updated llr_scaling : ",model.llr_scaling.data)
 print("test start!") 
 
 
@@ -421,7 +426,7 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             code = 1 - 2*code # bpsk 처리 안했었네..
             r=AWGN_re_inital_r(snr,code) # f x n
             final_llr_hat = model(r)
-            final_llr_hat = torch.clamp(final_llr_hat, -20, 20)
+            #final_llr_hat = torch.clamp(final_llr_hat, -20, 20)
             #print(final_llr_hat)
             # hard decision
             Z=hard_decision(final_llr_hat)
@@ -429,11 +434,14 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             ber = ber+ (orignal_code[:,:K]!=Z[:,:K]).sum().item()
         ber=ber/(K*test_frame)
         BER_array.append(ber)
+        '''
         print("SNR :",snr,"BER :",ber)
-        print("LLR min:", final_llr_hat.min().item())
-        print("LLR max:", final_llr_hat.max().item())
-        print("LLR mean:", final_llr_hat.mean().item())
-        print("LLR std:", final_llr_hat.std().item())
+        print("LLR min:", iteration_llr.min().item())
+        print("LLR max:", iteration_llr.max().item())
+        print("LLR mean:", iteration_llr.mean().item())
+        print("LLR std:", iteration_llr.std().item())
+        '''
 
 print(BER_array)
+
 

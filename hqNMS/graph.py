@@ -58,7 +58,9 @@ batch = 20
 BER_41=[0.13048935185185184, 0.11640925925925925, 0.10234583333333333, 0.0881625, 0.07432430555555555, 0.05989328703703704, 0.04529212962962963, 0.031509027777777775, 0.020825925925925925]
 BER_42=[0.13074606481481482, 0.11668310185185185, 0.10276898148148148, 0.08833148148148148, 0.07436828703703703, 0.05948333333333333, 0.04341550925925926, 0.027568055555555554, 0.01765]
 BER_43=[0.13040092592592592, 0.11675277777777777, 0.10308657407407408, 0.08895347222222222, 0.0739337962962963, 0.0561287037037037, 0.03187361111111111, 0.010244444444444445, 0.002446759259259259]
-
+BER_44=[0.13204745370370372, 0.11883078703703703, 0.10629699074074074, 0.09379837962962963, 0.08075555555555555, 0.06519884259259259, 0.04401157407407407, 0.018867592592592592, 0.004846527777777778]
+BER_45=[0.13099398148148148, 0.11721180555555556, 0.10398472222222223, 0.09141921296296296, 0.07904375, 0.06716643518518518, 0.056574074074074075, 0.04664976851851852, 0.037713194444444445]
+BER_46=[0.1308, 0.11752175925925926, 0.10462175925925926, 0.09155254629629629, 0.07858634259259259, 0.06600625, 0.05354560185185185, 0.040802546296296295, 0.028649074074074073]
 
 >>>>>>> 64c2a2d50e3d773dcacd58b5dbdaaef01d1e1d84
 epoch = 1
@@ -88,14 +90,12 @@ eta=0
 # 로그 그래프
 
 plt.figure(figsize=(10, 7))
-plt.semilogy(SNR, BER_28, marker='o', markersize=6, linewidth=1.5,label="NMS")
-#plt.semilogy(SNR, BER_25, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS, fixed eta=0.7 fixed qk= -4~4") #
-# train - soft quantization (eta = 0 ) + edge sharing weight
-#plt.semilogy(SNR, BER_26, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , range : abs(4) ")
-#plt.semilogy(SNR, BER_30, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , range : abs(12)")
-#plt.semilogy(SNR, BER_27, marker='o', markersize=6, linewidth=1.5,label=" 3bit qNMS , range : abs(4) ")  # -4 -3 -2 0 1 2 3 ( 8 bit )
-#plt.semilogy(SNR, BER_29, marker='o', markersize=6, linewidth=1.5,label="4bit qNMS , range : abs(4)")
-#plt.semilogy(SNR, BER_26, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , range : abs(4) ")
+
+# semilogy
+#plt.semilogy(SNR, BER_0, marker='o', markersize=6, linewidth=1.5,label=" NMS - spatial weight sharing,  init alpha =0.7 init beta = 0.05")
+#plt.semilogy(SNR, BER_15, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge sharing weight   init alpha =0.7 init beta = 0.05" )
+#plt.semilogy(SNR, BER_2, marker='o', markersize=6, linewidth=1.5,label=" SMS , fixed alpha =0.7 fixed beta = 0.05")
+#plt.semilogy(SNR, BER_3, marker='o', markersize=6, linewidth=1.5,label=" MS(float) ")
 
 
 #plt.semilogy(SNR, BER_38, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , range : abs(1)")
@@ -107,8 +107,11 @@ plt.semilogy(SNR, BER_40, marker='o', markersize=6, linewidth=1.5,label=" 2bit q
 plt.semilogy(SNR, BER_41, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , range : abs(7)")
 =======
 #plt.semilogy(SNR, BER_37,   marker='o', markersize=6, linewidth=1.5,label="2bit qNMS , range : abs(3)")
-plt.semilogy(SNR, BER_31, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , range : abs(4)")
-plt.semilogy(SNR, BER_43, marker='o', markersize=6, linewidth=1.5,label=" 2/6bit qNMS , range : abs(4)")
+
+#plt.semilogy(SNR, BER_43, marker='o', markersize=6, linewidth=1.5,label=" 2/6bit qNMS , range : abs(4)")
+#plt.semilogy(SNR, BER_46, marker='o', markersize=6, linewidth=1.5,label=" 2/6bit qNMS , range : abs(4) NOLD")
+plt.semilogy(SNR, BER_44, marker='o', markersize=6, linewidth=1.5,label=" 2/6bit qNMS , range : scaling factor (init=1)")
+plt.semilogy(SNR, BER_45, marker='o', markersize=6, linewidth=1.5,label=" 2/6bit qNMS , range : scaling factor (init=4)")
 #plt.semilogy(SNR, BER_42, marker='o', markersize=6, linewidth=1.5,label="train_data*10 2bit qNMS , range : abs(4)")
 #plt.semilogy(SNR, BER_41, marker='o', markersize=6, linewidth=1.5,label="train_data*100 2bit qNMS , range : abs(4)")
 #plt.semilogy(SNR, BER_40, marker='o', markersize=6, linewidth=1.5,label=" 2bit qNMS , range : abs(5)")
