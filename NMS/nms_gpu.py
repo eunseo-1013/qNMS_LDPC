@@ -222,7 +222,7 @@ for i in range(epoch):
         r=AWGN_re_inital_r(train_snr,code) # f x n
         # Neural
         optimizer.zero_grad()
-        llr_hat=  model(r)
+        llr_hat= - model(r)
         loss=loss_fn(llr_hat[:,:],orignal_code)
         loss.backward()
         optimizer.step() 

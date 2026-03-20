@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # model 1 bit
 frame = 100000  # 10^5
 batch = 20
-test_batch=100
+test_batch=10000
 epoch = 1
 test_frame= 1000000
 
@@ -286,7 +286,7 @@ torch.manual_seed(42)
 
 
 
-SNR = [1.0, 1.5, 2.0, 2.5, 3.0,3.5, 4.0, 4.5, 5.0]
+SNR = [ 4.0, 4.5, 5.0, 5.5, 6.0]
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
 K=N*int(filename[12])/int(filename[13])

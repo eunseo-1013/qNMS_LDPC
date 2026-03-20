@@ -1,3 +1,5 @@
+# 2026.3 월 말 부터 사용 중인 FER / BER 그래프 
+
 import matplotlib.pyplot as plt
 import numpy as np
 

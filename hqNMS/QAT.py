@@ -8,45 +8,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
+print("QAT !")
 
 
 # model 1 bit
-'''
 
 frame = 100000
 batch = 20
 epoch = 1
-test_frame= 10000
-test_batch=100
+test_frame= 1000000
+test_batch=10000
 iteration_num=20
 
-train_snr=2.0 
-learning_rate=0.001
-'''
-
-
-frame = 100
-batch = 20
-epoch = 1
-test_frame= 10
-test_batch=10
-iteration_num=20
-
-train_snr=2.0 
+ 
 learning_rate=0.001
 
 #fixed
 
 #qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
-b_c = 2
+b_c = 6
 b_r=2
 b_v = 6
 eta=0.5
 eta_test=0
 alpha=2**b_c 
-step=(2*alpha)
+
 
 
 
@@ -146,7 +133,7 @@ def AWGN_re_inital_r(snr,code):
 
 
 
-def AWGN_re_inital_r_add_q(snr,code):
+def AWGN_re_inital_r_add_q(snr,code,eta):
     # AWGN 환경 통과  <- 재미나이 헬프~~ 
     signal_power=torch.mean(code**2)
     snr_linear=10**(snr/10)
@@ -157,14 +144,8 @@ def AWGN_re_inital_r_add_q(snr,code):
     received_signal = code + noise
     r=((2/sigma**2)*received_signal) # 사전 정보 (n)
     qk_r=make_qk(2/(sigma**2),b_r)
-    print("snr:",snr , "qk_r: ",qk_r)
     r=Q_soft(r,eta,qk_r)
     return r
-
-
-
-
-
 
 #nms decoder
 def initial_M(M,r):
@@ -333,7 +314,7 @@ class NMS(nn.Module):
         super().__init__()
         self.iteration=it
         self.alpha=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
-        self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.05)# edge-type 별 가중치 적용
+        self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.2)# edge-type 별 가중치 적용
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
         self.llr_scaling=nn.Parameter(torch.ones(self.iteration)*1) # 일단 ctov에만 적용해야겠는데...
         #uniform 초기값
@@ -347,8 +328,9 @@ class NMS(nn.Module):
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
-            
+    
             if self.training:
+             
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
                 #E=E/self.llr_scaling[iter]
                 #E=Q_soft(E,eta,qk_c)
@@ -364,6 +346,7 @@ class NMS(nn.Module):
                 #E=Q_soft(E,eta_test,qk_c)
                 #E=E*self.llr_scaling[iter]
                 M = update_M(E, r)
+                
                 #M=Q_soft(M,eta_test,qk_v)
                
         return r + torch.sum(E,dim=1)
@@ -380,9 +363,9 @@ torch.manual_seed(42)
 
 
 
-SNR = [1.0, 1.5, 2.0, 2.5, 3.0,3.5, 4.0, 4.5, 5.0]
+SNR = [4.0, 4.5, 5.0 ,5.5, 6.0]
 
-
+#SNR = [3.0,3.5, 4.0, 4.5, 5.0]
 
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
@@ -393,7 +376,7 @@ print("N:", N ,", K :" , K)
 
 
 step = frame // batch # 1epoch 당 몇번 업데이트 ?
-test_step = test_frame // batch # 1epoch 당 몇번 업데이트 ?
+test_step = test_frame // test_batch # 1epoch 당 몇번 업데이트 ?
 
 
 #-------------------------------------ldpc 인코딩-------------------------------
@@ -427,7 +410,7 @@ for snr in SNR:
             code=code.float()
             orignal_code=code
             code = 1 - 2*code # bpsk 처리 안했었네..
-            r=AWGN_re_inital_r_add_q(train_snr,code) # f x n  2bit 처리함!!
+            r=AWGN_re_inital_r_add_q(train_snr,code,eta) # f x n  2bit 처리함!!
             # Neural
             optimizer.zero_grad()
             llr_hat= - model(r)
@@ -453,12 +436,12 @@ for snr in SNR:
         ber=0
         fer=0
         for _ in range(test_step):
-            K_bit = make_k_bit(K,batch) # f x k
+            K_bit = make_k_bit(K,test_batch) # f x k
             code = K_bit.float()@G.float() # (f x k) x (k x n) == (f x n)
             code=(code%2).float()
             orignal_code=code
             code = 1 - 2*code # bpsk 처리 안했었네..
-            r=AWGN_re_inital_r(snr,code) # f x n
+            r=AWGN_re_inital_r_add_q(snr,code,eta_test) # f x n
             final_llr_hat = model(r)
             #final_llr_hat = torch.clamp(final_llr_hat, -20, 20)
             #print(final_llr_hat)
@@ -475,7 +458,3 @@ for snr in SNR:
        
 print(BER_array)
 print(FER_array)
-
-
-
-
