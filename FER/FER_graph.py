@@ -4,7 +4,7 @@ import numpy as np
 
 # snr 별 train - test 한 것들
 # 환경
-# model 1 bit
+
 frame = 100000  # 10^5
 batch = 20
 test_batch=50
@@ -20,21 +20,87 @@ learning_rate=0.001
 eta=0.5
 
 
+
+'''
+
 SNR = [1.0, 1.5, 2.0, 2.5, 3.0,3.5, 4.0,4.5, 5.0]
 
-
 BER_1=[0.1305902777777778, 0.1164412037037037, 0.10174120370370371, 0.08704907407407407, 0.07158032407407408, 0.05139375, 0.024727314814814813, 0.005506712962962963, 0.0004787037037037037]
-
+BER_2=[0.14021712962962962, 0.1274287037037037, 0.11492939814814815, 0.10339120370370371, 0.09171296296296297, 0.08092407407407408, 0.07062083333333333, 0.0604875, 0.050522222222222225]
 FER_1=[1.0, 1.0, 1.0, 1.0, 0.9982, 0.9313, 0.5894, 0.1673, 0.0187]
+FER_2=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+
+
+BER_3=[0.130460375, 0.11631847685185186, 0.10207899074074074, 0.08737709953703704, 0.07145366435185185, 0.051174796296296295, 0.02480117824074074, 0.005665634259259259, 0.0004847939814814815]
+FER_3=[1.0, 1.0, 1.0, 0.999978, 0.99716, 0.926967, 0.589935, 0.169437, 0.017921]
+
+
+BER_4=[0.13016527777777778, 0.11622268518518518, 0.10217314814814815, 0.08741481481481482, 0.07132199074074073, 0.0510787037037037, 0.02456875, 0.005359490740740741, 0.00039421296296296296]
+FER_4=[1.0, 1.0, 1.0, 0.9998, 0.9963, 0.9268, 0.5807, 0.1593, 0.0136]
+
+
+BER_5=[0.13016203703703705, 0.11620532407407408, 0.10214791666666667, 0.08731898148148148, 0.07128796296296297, 0.05109074074074074, 0.024412268518518517, 0.005323379629629629, 0.00036898148148148147]
+FER_5=[1.0, 1.0, 1.0, 0.9996, 0.995, 0.9256, 0.5777, 0.1591, 0.0125]
+'''
+SNR = [ 4.0,4.5, 5.0,5.5,6.0]
+
+BER_6=[0.07025925925925926, 0.06043958333333333, 0.05067893518518519, 0.041837037037037034, 0.03423194444444445]
+FER_6=[1.0, 1.0, 1.0, 1.0, 1.0]
+BER_7=[0.02377199074074074, 0.005393981481481481, 0.0004738425925925926, 9.722222222222223e-06, 0.0]
+FER_7=[0.5535, 0.1567, 0.0169, 0.0005, 0.0]
+
+BER_8=[0.02423010648148148, 0.005426148148148148, 0.0004447037037037037, 1.3138888888888888e-05, 2.337962962962963e-07]
+FER_8=[0.561942, 0.15646, 0.015733, 0.000597, 1.7e-05]
+
+BER_9=[0.07058969675925926, 0.06033939351851852, 0.05053249768518518, 0.041785171296296296, 0.034311650462962966]
+FER_9=[1.0, 1.0, 1.0, 1.0, 1.0]
+
+
+BER_10=[0.05305097222222222, 0.039091368055555555, 0.027671622685185186, 0.020324847222222223, 0.015536821759259259]
+FER_10=[0.999996, 0.999979, 0.999845, 0.999428, 0.998054]
+
+BER_11=[0.024688175925925926, 0.005890243055555556, 0.0005529768518518518, 1.9962962962962963e-05, 6.319444444444444e-07]
+FER_11=[0.571823, 0.169572, 0.019456, 0.000882, 3.6e-05]
+BER_12=[0.03984748842592593, 0.017433918981481483, 0.004037666666666667, 0.0004431458333333333, 2.3604166666666667e-05]
+FER_12=[0.829983, 0.467725, 0.136648, 0.018391, 0.001314]
+BER_13=[0.057171712962962966,0.04991304861111111,0.03504558101851852 ]
+FER_13=[ 1.0,0.999938,0.997123]
 
 
 plt.figure(figsize=(10, 7))
 
 # semilogy
+'''
 #plt.semilogy(SNR, BER_1, marker='o', markersize=6, linewidth=1.5,label=" NMS - spatial weight sharing,  init alpha =0.7 init beta = 0.05")
-plt.semilogy(SNR, FER_1, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge weight sharing,  init alpha =0.7 init beta = 0.2")
-plt.semilogy(SNR, BER_1,linestyle='--', marker='o', markersize=6, linewidth=1.5,label=" NMS - edge weight sharing,  init alpha =0.7 init beta = 0.2")
+plt.semilogy(SNR, BER_1,color='blue', marker='o', markersize=6, linewidth=1.5,label=" NMS - FER ")
+plt.semilogy(SNR, FER_1,color='blue',linestyle='--', marker='o', markersize=6, linewidth=1.5,label=" NMS - BER")
+plt.semilogy(SNR, BER_4,color='yellow', marker='o', markersize=6, linewidth=1.5,label=" iteration 30 NMS - FER ")
+plt.semilogy(SNR, FER_4,color='yellow',linestyle='--', marker='o', markersize=6, linewidth=1.5,label=" iteration 30 NMS - BER")
+plt.semilogy(SNR, BER_5,color='red', marker='o', markersize=6, linewidth=1.5,label=" iteration 40 NMS - FER ")
+plt.semilogy(SNR, FER_5,color='red',linestyle='--', marker='o', markersize=6, linewidth=1.5,label=" iteration 40 NMS - BER")
+#plt.semilogy(SNR, FER_2, marker='o', markersize=6, linewidth=1.5,label=" qNMS - channel 2bit")
+#plt.semilogy(SNR, BER_2, marker='o',linestyle='--', markersize=6, linewidth=1.5,label=" qNMS - channel 2bit")
+#plt.semilogy(SNR, FER_3,color='red', marker='o', markersize=6, linewidth=1.5,label=" NMS - test data 100 times")
+#plt.semilogy(SNR, BER_3,color='red', marker='o',linestyle='--', markersize=6, linewidth=1.5,label="  NMS - test data 100 times") 
+plt.semilogy(SNR, FER_6,color='red', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label=" NMS 2bit llr")
+plt.semilogy(SNR, BER_6,color='red', marker='o', markersize=6, linewidth=1.5,label="  NMS 2bit llr") 
+plt.semilogy(SNR, FER_7,color='blue', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label=" NMS - FER")
+plt.semilogy(SNR, BER_7,color='blue', marker='o', markersize=6, linewidth=1.5,label="  NMS - BER") '''
+#plt.semilogy(SNR, FER_8,color='blue', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label=" NMS - FER")
+#plt.semilogy(SNR, BER_8,color='blue', marker='o', markersize=6, linewidth=1.5,label=" NMS - BER")
 plt.xlabel("SNR (dB)", fontsize=12)
+#plt.semilogy(SNR, FER_9,color='red', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="2bit llr qNMS - FER")
+#plt.semilogy(SNR, BER_9,color='red', marker='o', markersize=6, linewidth=1.5,label="2bit llr qNMS - BER")
+#plt.semilogy(SNR, FER_10,color='orange', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="3bit llr qNMS - FER")
+#plt.semilogy(SNR, BER_10,color='orange', marker='o', markersize=6, linewidth=1.5,label="3bit llr qNMS - BER")
+
+#plt.semilogy(SNR, FER_11,color='orange', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="3bit llr qNMS add scaling - FER")
+#plt.semilogy(SNR, BER_11,color='orange', marker='o', markersize=6, linewidth=1.5,label="3bit llr qNMS add scaling - BER")
+plt.semilogy(SNR, FER_12,color='red', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - FER")
+plt.semilogy(SNR, BER_12,color='red', marker='o', markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - BER")
+plt.semilogy(SNR, FER_13,color='pink', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - FER")
+plt.semilogy(SNR, BER_13,color='pink', marker='o', markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - BER")
 plt.ylabel("Frame Error Rate (FER)", fontsize=12)
 plt.title(f'Iteration: {iteration_num}, Train SNR: test SNR\n SNR - BER ', fontsize=14)
 

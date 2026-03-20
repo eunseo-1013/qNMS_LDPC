@@ -12,12 +12,25 @@ import matplotlib.pyplot as plt
 
 
 # model 1 bit
+'''
 
 frame = 100000
 batch = 20
 epoch = 1
 test_frame= 10000
 test_batch=100
+iteration_num=20
+
+train_snr=2.0 
+learning_rate=0.001
+'''
+
+
+frame = 100
+batch = 20
+epoch = 1
+test_frame= 10
+test_batch=10
 iteration_num=20
 
 train_snr=2.0 
@@ -143,9 +156,15 @@ def AWGN_re_inital_r_add_q(snr,code):
     noise=torch.randn_like(code)*sigma
     received_signal = code + noise
     r=((2/sigma**2)*received_signal) # 사전 정보 (n)
-    qk_r=make_qk(-2*sigma,2*sigma,b_r)
+    qk_r=make_qk(2/(sigma**2),b_r)
+    print("snr:",snr , "qk_r: ",qk_r)
     r=Q_soft(r,eta,qk_r)
     return r
+
+
+
+
+
 
 #nms decoder
 def initial_M(M,r):
@@ -398,6 +417,7 @@ llr_hat=(torch.zeros(frame,N))
 
 FER_array=[]
 for snr in SNR:
+    train_snr=snr
     model.train()
     for i in range(epoch): 
         for _ in range(step):
@@ -430,7 +450,6 @@ for snr in SNR:
 
     #----------- 성능 평가 -------------
     with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
-        for snr in SNR:
         ber=0
         fer=0
         for _ in range(test_step):
@@ -459,14 +478,4 @@ print(FER_array)
 
 
 
-
-
-
- '''
-        print("SNR :",snr,"BER :",ber)
-        print("LLR min:", iteration_llr.min().item())
-        print("LLR max:", iteration_llr.max().item())
-        print("LLR mean:", iteration_llr.mean().item())
-        print("LLR std:", iteration_llr.std().item())
-        '''
 
