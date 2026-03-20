@@ -8,35 +8,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
+print("QAT !")
 
 
 # model 1 bit
 
-frame = 1000 # 10 **2 임! ( 원래 코드 대비 )
+frame = 100000
 batch = 20
 epoch = 1
-test_frame= 10000
-
+test_frame= 1000000
+test_batch=10000
 iteration_num=20
 
-train_snr=2.0 
+ 
 learning_rate=0.001
 
 #fixed
 
 #qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
-b_c = 2
+b_c = 6
+b_r=2
 b_v = 6
 eta=0.5
 eta_test=0
 alpha=2**b_c 
-step=(2*alpha)/4
 
 
-qk_c = torch.arange(-alpha, alpha, step/(2**(b_c-2)))  # 여긴 무조건 고정 값! 
-qk_v = torch.arange(-alpha,alpha , step/(2**(b_v-2)))
+
+
+def make_qk(alpha,b):
+    step=(2*alpha)
+    qk=torch.arange(-alpha, alpha,step/(2**(b)))
+    return qk
+
+qk_c = make_qk(alpha,b_c)  # 여긴 무조건 고정 값! 
+qk_v=make_qk(alpha,b_v)
 
 
 
@@ -123,6 +130,22 @@ def AWGN_re_inital_r(snr,code):
     r=((2/sigma**2)*received_signal) # 사전 정보 (n)
     return r
 
+
+
+
+def AWGN_re_inital_r_add_q(snr,code,eta):
+    # AWGN 환경 통과  <- 재미나이 헬프~~ 
+    signal_power=torch.mean(code**2)
+    snr_linear=10**(snr/10)
+    noise_power=signal_power/snr_linear
+    sigma = torch.sqrt(noise_power) # 표준편차
+
+    noise=torch.randn_like(code)*sigma
+    received_signal = code + noise
+    r=((2/sigma**2)*received_signal) # 사전 정보 (n)
+    qk_r=make_qk(2/(sigma**2),b_r)
+    r=Q_soft(r,eta,qk_r)
+    return r
 
 #nms decoder
 def initial_M(M,r):
@@ -291,7 +314,7 @@ class NMS(nn.Module):
         super().__init__()
         self.iteration=it
         self.alpha=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
-        self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.05)# edge-type 별 가중치 적용
+        self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.2)# edge-type 별 가중치 적용
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
         self.llr_scaling=nn.Parameter(torch.ones(self.iteration)*1) # 일단 ctov에만 적용해야겠는데...
         #uniform 초기값
@@ -305,24 +328,26 @@ class NMS(nn.Module):
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
-            
+    
             if self.training:
+             
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=E/self.llr_scaling[iter]
-                E=Q_soft(E,eta,qk_c)
-                E=E*self.llr_scaling[iter]
+                #E=E/self.llr_scaling[iter]
+                #E=Q_soft(E,eta,qk_c)
+                #E=E*self.llr_scaling[iter]
                 M = update_M(E, r)
-                M=Q_soft(M,eta,qk_v)
+                #M=Q_soft(M,eta,qk_v)
                 
 
                
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=E/self.llr_scaling[iter]
-                E=Q_soft(E,eta_test,qk_c)
-                E=E*self.llr_scaling[iter]
+                #E=E/self.llr_scaling[iter]
+                #E=Q_soft(E,eta_test,qk_c)
+                #E=E*self.llr_scaling[iter]
                 M = update_M(E, r)
-                M=Q_soft(M,eta_test,qk_v)
+                
+                #M=Q_soft(M,eta_test,qk_v)
                
         return r + torch.sum(E,dim=1)
     
@@ -338,9 +363,9 @@ torch.manual_seed(42)
 
 
 
-SNR = [1.0, 1.5, 2.0, 2.5, 3.0,3.5, 4.0, 4.5, 5.0]
+SNR = [4.0, 4.5, 5.0 ,5.5, 6.0]
 
-
+#SNR = [3.0,3.5, 4.0, 4.5, 5.0]
 
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
@@ -351,7 +376,7 @@ print("N:", N ,", K :" , K)
 
 
 step = frame // batch # 1epoch 당 몇번 업데이트 ?
-test_step = test_frame // batch # 1epoch 당 몇번 업데이트 ?
+test_step = test_frame // test_batch # 1epoch 당 몇번 업데이트 ?
 
 
 #-------------------------------------ldpc 인코딩-------------------------------
@@ -372,59 +397,51 @@ llr_hat=(torch.zeros(frame,N))
 
 #--------------------------------------- nms 디코딩--------------------------------
 
-model.train()
-for i in range(epoch): 
-    for _ in range(step):
-        K_bit = make_k_bit(K,batch) # f x k
-        code = K_bit.float()@G.float()# (f x k) x (k x n) == (f x n)
-        code=(code%2)
-        code=code.float()
-        orignal_code=code
-        code = 1 - 2*code # bpsk 처리 안했었네..
-        r=AWGN_re_inital_r(train_snr,code) # f x n
-        # Neural
-        optimizer.zero_grad()
-        llr_hat= - model(r)
-        loss=loss_fn(llr_hat[:,:],orignal_code)
-        loss.backward()
-        optimizer.step() 
-   
-    #print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
-    #print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
-    #print("epoch : " , i, "updated qk : ", model.qk.data)  # 1epoch 당  알파 업데이트 값
-    #print("epoch : " , i, "updated eta : ", model.eta.data)  # 1epoch 당  알파 업데이트 값
-    
 
-
-
-print("updated alpha : ", model.alpha.data)  # 최종  알파 업데이트 값
-
-print("updated alpha shape : ", model.alpha.shape)  # 최종  알파 업데이트 값
-print("updated llr_scaling : ",model.llr_scaling.data)
-print("test start!") 
-
-
-
-
-
-
-
-
-model.eval()
-
-
-
-#----------- 성능 평가 -------------
-with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
-    for snr in SNR:
-        ber=0
-        for _ in range(test_step):
+FER_array=[]
+for snr in SNR:
+    train_snr=snr
+    model.train()
+    for i in range(epoch): 
+        for _ in range(step):
             K_bit = make_k_bit(K,batch) # f x k
+            code = K_bit.float()@G.float()# (f x k) x (k x n) == (f x n)
+            code=(code%2)
+            code=code.float()
+            orignal_code=code
+            code = 1 - 2*code # bpsk 처리 안했었네..
+            r=AWGN_re_inital_r_add_q(train_snr,code,eta) # f x n  2bit 처리함!!
+            # Neural
+            optimizer.zero_grad()
+            llr_hat= - model(r)
+            loss=loss_fn(llr_hat[:,:],orignal_code)
+            loss.backward()
+            optimizer.step() 
+    
+        #print("epoch : " , i, "updated alpha : ", model.alpha.data)  # 1epoch 당  알파 업데이트 값
+        #print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
+        #print("epoch : " , i, "updated qk : ", model.qk.data)  # 1epoch 당  알파 업데이트 값
+        #print("epoch : " , i, "updated eta : ", model.eta.data)  # 1epoch 당  알파 업데이트 값
+        
+    print("updated alpha : ", model.alpha.data[:,:,-1])  # 최종  알파 업데이트 값
+    print("updated beta : ", model.beta.data[:,:,-1])
+    #print("updated alpha shape : ", model.alpha.shape)  # 최종  알파 업데이트 값
+    #print("updated llr_scaling : ",model.llr_scaling.data)
+    print("test start!") 
+
+    model.eval()
+
+    #----------- 성능 평가 -------------
+    with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
+        ber=0
+        fer=0
+        for _ in range(test_step):
+            K_bit = make_k_bit(K,test_batch) # f x k
             code = K_bit.float()@G.float() # (f x k) x (k x n) == (f x n)
             code=(code%2).float()
             orignal_code=code
             code = 1 - 2*code # bpsk 처리 안했었네..
-            r=AWGN_re_inital_r(snr,code) # f x n
+            r=AWGN_re_inital_r_add_q(snr,code,eta_test) # f x n
             final_llr_hat = model(r)
             #final_llr_hat = torch.clamp(final_llr_hat, -20, 20)
             #print(final_llr_hat)
@@ -432,16 +449,12 @@ with torch.no_grad(): # 자동 미분 중지.. 속도 빠르게 할려고
             Z=hard_decision(final_llr_hat)
             mask=(orignal_code == Z)
             ber = ber+ (orignal_code[:,:K]!=Z[:,:K]).sum().item()
+            fer = fer + ((orignal_code[:,:K]!=Z[:,:K]).any(dim=1)).sum().item()
         ber=ber/(K*test_frame)
         BER_array.append(ber)
-        '''
-        print("SNR :",snr,"BER :",ber)
-        print("LLR min:", iteration_llr.min().item())
-        print("LLR max:", iteration_llr.max().item())
-        print("LLR mean:", iteration_llr.mean().item())
-        print("LLR std:", iteration_llr.std().item())
-        '''
-
+        fer=fer/test_frame
+        FER_array.append(fer)
+        print("SNR :",snr,"BER :",ber,"FER :",fer)
+       
 print(BER_array)
-
-
+print(FER_array)
