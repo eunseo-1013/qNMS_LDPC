@@ -13,11 +13,7 @@ import matplotlib.pyplot as plt
 
 # model 1 bit
 
-<<<<<<< HEAD
 frame = 100000
-=======
-frame = 10000 # 10 **2 임! ( 원래 코드 대비 )
->>>>>>> 64c2a2d50e3d773dcacd58b5dbdaaef01d1e1d84
 batch = 20
 epoch = 1
 test_frame= 10000

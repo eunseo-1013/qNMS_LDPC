@@ -10,10 +10,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-print("all quantization")
+
+
+torch.manual_seed(42)
+
 # model 1 bit
 
-frame = 100000
+frame = 100000 
 batch = 20
 epoch = 1
 test_frame= 1000000
@@ -33,8 +36,10 @@ b_r=6
 b_v = 6
 eta=0.5
 eta_test=0
-alpha=2**b_c  # range (12)
+alpha=12  # range (12)
 
+print(" snr 8,5 all quantization",
+      f"b_r : {b_r} , b_c : {b_c} , b_v : {b_v} , eta : {eta} , alpha : {alpha}")
 
 print(b_r)
 print(b_r)
@@ -394,13 +399,13 @@ class NMS(nn.Module):
                 
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=E/self.llr_scaling[iter]
+                E=E/self.llr_scaling_ctov[iter]
                 E=Q_soft(E,eta_test,qk_c)
-                E=E*self.llr_scaling[iter]
+                E=E*self.llr_scaling_ctov[iter]
                 M = update_M(E, r)
-                M=M/self.llr_scaling[iter]
+                M=M/self.llr_scaling_vtoc[iter]
                 M=Q_soft(M,eta_test,qk_v)
-                M=M*self.llr_scaling[iter]
+                M=M*self.llr_scaling_vtoc[iter]
                
         return r + torch.sum(E,dim=1)
     
@@ -412,14 +417,13 @@ optimizer=torch.optim.Adam( list(model.parameters()) + list(channel.parameters()
     lr=learning_rate)
 loss_fn =  nn.BCEWithLogitsLoss()   # 이거 frame 으로 바꿔야함
 
-torch.manual_seed(42)
 
 
 
 
 
-SNR = [4.0, 5.0, 6.0,7.0,8.0,9.0,10.0]
 
+SNR = [5.0,8.0]
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
 K=N*int(filename[12])/int(filename[13])
