@@ -22,38 +22,35 @@ test_batch=50
 iteration_num=20
 
  
-
 learning_rate=0.001
 
 #fixed
 
-#qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
-
-b_c = 6
-b_r=6
-b_v = 6
-eta=0.5
-eta_test=0
-alpha=2**b_c  # range (12)
+b_c = 5
+b_r = 5
+b_v = 5
 
 
-print(b_r)
-print(b_r)
+step=1
+step_r=1
+step_c=1
+step_v=1
 
-def make_qk(alpha,b):
-    step=(2*alpha)
-    qk=torch.arange(-alpha, alpha,step/(2**(b)))
+
+
+
+
+def make_qk(b,step):
+    range=(2**b)*step
+    qk=torch.arange(-range/(2)+(step/2),(range/(2)),step)
     return qk
 
-qk_c = make_qk(alpha,b_c)  # 여긴 무조건 고정 값! 
-qk_v=make_qk(alpha,b_v)
-
-
-
+qk_c = make_qk(b_c,step_c)   # 여긴 무조건 고정 값! 
+qk_v=make_qk(b_v,step_v)     # 대표값!
+ 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("device = ",device)
-
 
 
 def H_to_tensor(filename):
@@ -95,10 +92,6 @@ def make_G_using_H(RREF_H,K):
     return G
 
 
-device = torch.device("cuda" if torch.cuda.is_available()else "cpu")
-print("device = ",device)
-
-
 
 def make_k_bit(K,frame): # 돌려볼 비트 만들기  batch  x  k 길이
    orignal_bit=torch.randint(low=0,high=2,size=(frame,K),device=device)
@@ -133,8 +126,8 @@ def AWGN_re_inital_r_add_q(snr,code,eta):
     r=((2/sigma**2)*received_signal) # 사전 정보 (n)
 
     # scaling factor 추가! 
-    qk_r=make_qk(2/(sigma**2),b_r)
-    r=Q_soft(r,eta,qk_r)
+    qk_r=make_qk(b_r,step_r)
+    r=Q_ste(r,qk_r)
     return r
 
 
@@ -222,38 +215,15 @@ def c_to_v(M,alpha,beta=0):
     #print("Z =========",Z_init)
     # 위의 코드 병렬화
     alpha_expanded = torch.repeat_interleave(alpha,Z_init, dim=0).repeat_interleave(Z_init, dim=1)
-    beta_expanded = torch.repeat_interleave(beta,Z_init,dim=0).repeat_interleave(Z_init, dim=1)
+    #beta_expanded = torch.repeat_interleave(beta,Z_init,dim=0).repeat_interleave(Z_init, dim=1)
     alpha_expanded.to(device)
-    beta_expanded.to(device)
+    #beta_expanded.to(device)
     #print(M.device, H.device, alpha.device)
-    E = alpha_expanded * E_sign * torch.relu(E_abs - beta_expanded)
-    
+    E = alpha_expanded * E_sign * (E_abs)
     #E = alpha * E_sign * torch.max(torch.zeros_like(E_abs),E_abs-beta)
     return E * H 
 
-
-
-# 병렬로 바꾸기
-def Q_soft(x, eta, qk):
-    logits = -((x.unsqueeze(-1).to(device) - qk.to(device))**2) / (2 * (eta**2) + 1e-12)
-    # 파이토치의 최적화된 softmax 사용
-    weights = torch.nn.functional.softmax(logits, dim=-1)
-    return torch.sum(weights.to(device) * qk. to(device), dim=-1)
-
-
-
-
-def Q_hard(x, qk):
-    qk = qk.to(device=x.device, dtype=x.dtype)
-    dist = (x.unsqueeze(-1) - qk.view(*([1]*x.ndim), -1)).abs() # 거리
-    idx = dist.argmin(dim=-1)
-    xq = qk[idx]
-    Hb = H.bool()
-    Hb = Hb.unsqueeze(0).expand(xq.shape[0],-1,-1)
-    
-    return xq * Hb  # non-edge는 0           
-
-
+        
 def Q_ste(x, qk):
     qk = qk.to(device=x.device, dtype=x.dtype)
 
