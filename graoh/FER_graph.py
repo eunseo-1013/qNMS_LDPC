@@ -66,8 +66,8 @@ BER_11=[0.024688175925925926, 0.005890243055555556, 0.0005529768518518518, 1.996
 FER_11=[0.571823, 0.169572, 0.019456, 0.000882, 3.6e-05]
 BER_12=[0.03984748842592593, 0.017433918981481483, 0.004037666666666667, 0.0004431458333333333, 2.3604166666666667e-05]
 FER_12=[0.829983, 0.467725, 0.136648, 0.018391, 0.001314]
-BER_13=[0.057171712962962966,0.04991304861111111,0.03504558101851852 ]
-FER_13=[ 1.0,0.999938,0.997123]
+BER_13=[0.057171712962962966, 0.04991304861111111, 0.03504558101851852, 0.019621159722222222, 0.00840750462962963]
+FER_13=[1.0, 0.999938, 0.997123, 0.968167, 0.848049]
 
 
 plt.figure(figsize=(10, 7))
@@ -100,9 +100,9 @@ plt.xlabel("SNR (dB)", fontsize=12)
 #plt.semilogy(SNR, FER_11,color='orange', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="3bit llr qNMS add scaling - FER")
 #plt.semilogy(SNR, BER_11,color='orange', marker='o', markersize=6, linewidth=1.5,label="3bit llr qNMS add scaling - BER")
 plt.semilogy(SNR, FER_12,color='red', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - FER")
-plt.semilogy(SNR, BER_12,color='red', marker='o', markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - BER")
-plt.semilogy(SNR, FER_13,color='pink', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - FER")
-plt.semilogy(SNR, BER_13,color='pink', marker='o', markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling - BER")
+plt.semilogy(SNR, BER_12,color='red', marker='o', markersize=6, linewidth=1.5,label="2bit llr qNMS add scaling  - BER")
+plt.semilogy(SNR, FER_13,color='pink', marker='o',linestyle='--' ,markersize=6, linewidth=1.5,label="2bit llr add scaling 6bit message qNMS - FER")
+plt.semilogy(SNR, BER_13,color='pink', marker='o', markersize=6, linewidth=1.5,label="2bit llr add scaling 6bit message qNMS  - BER")
 plt.ylabel("Frame Error Rate (FER)", fontsize=12)
 plt.title(f'Iteration: {iteration_num}, Train SNR: test SNR\n SNR - BER ', fontsize=14)
 
