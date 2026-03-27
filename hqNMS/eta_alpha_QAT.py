@@ -1,6 +1,9 @@
+# eta 다음에 alpha, beta 학습!
+
+# Soft quantization 말고 ...  STE 사용하는 것!
 
 # channel llr - QAT 방식  quantization  (parameter - scaling factor [channel])
-# ctov,vtoc  - soft quantization  ( paramter - per iteration scaling factor [추가예정])
+# ctov,vtoc  - soft quantization  ( paramter - per iteration scaling factor [추가 완료~])
 
 
 import torch
@@ -10,18 +13,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
-
-torch.manual_seed(42)
-
+print(" 100000 batch=20  22 all quantization")
 # model 1 bit
-
-frame = 100000 
-batch = 20
-epoch = 1
-test_frame= 1000000
+#100000
+#1000000
+frame =100000
+batch=20
+epoch = 3 # 1일때는 alpha, beta 만! 2일 때는  -> 스케일링 값!
+test_frame=1000000
 test_batch=5000
 iteration_num=20
+
 
  
 
@@ -31,15 +33,13 @@ learning_rate=0.001
 
 #qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
-b_c = 2
-b_r=2
-b_v = 2
+b_c = 3
+b_r=3
+b_v = 3
 eta=0.5
 eta_test=0
 alpha=12  # range (12)
 
-print(" not scaling factor all 2 quantization",
-      f"b_r : {b_r} , b_c : {b_c} , b_v : {b_v} , eta : {eta} , alpha : {alpha}")
 
 print(b_r)
 print(b_r)
@@ -51,21 +51,6 @@ def make_qk(alpha,b):
 
 qk_c = make_qk(alpha,b_c)  # 여긴 무조건 고정 값! 
 qk_v=make_qk(alpha,b_v)
-
-
-
-'''
-if(b==2):
-    qk = torch.arange(-alpha, alpha , step)
-elif(b==3):
-    qk = torch.arange(-alpha, alpha , step/(2**(b-2)))
-elif(b==4):
-    qk = torch.arange(-alpha, alpha , step/4)
-
-
-'''
-
-
 
 
 
@@ -156,25 +141,6 @@ def AWGN_re_inital_r_add_q(snr,code,eta):
     r=Q_soft(r,eta,qk_r)
     return r
 
-'''
-
-def AWGN_re_inital_r_add_q_neural(snr,code,eta,scaling_factor):
-    # AWGN 환경 통과  <- 재미나이 헬프~~ 
-    signal_power=torch.mean(code**2)
-    snr_linear=10**(snr/10)
-    noise_power=signal_power/snr_linear
-    sigma = torch.sqrt(noise_power) # 표준편차
-
-    noise=torch.randn_like(code)*sigma
-    received_signal = code + noise
-    r=((2/sigma**2)*received_signal) # 사전 정보 (n)
-    r=r/scaling_factor
-    # scaling factor 추가! 
-    qk_r=make_qk(2/(sigma**2),b_r)
-    r=Q_soft(r,eta,qk_r)
-    r=r*scaling_factor
-    return r
-'''
 class AWGNChannel(nn.Module):
     def __init__(self, b_r, eta):
         super().__init__()
@@ -208,24 +174,6 @@ def initial_M(M,r):
     return M.to(device)
 
 
-'''
-def c_to_v(E,M,alpha=1,beta=0):
-    mask=(H==1)
-    eye=1-torch.eye(N-K,dtype=torch.bool,device=device)
-    concat_eye= torch.ones((N-K, K), dtype=torch.bool,device=device)
-    eye=torch.cat([eye,concat_eye],dim=1)
-    mask=mask&eye
-    
-
-    except_self_M = mask.unsqueeze(0) * M
-    min_val,min_idx = torch.min(torch.abs(except_self_M),dim=1)
-    sgn = torch.prod(torch.where(mask,M,torch.ones_like(M)),dim=1)  # condition 이랑 같은 크기로 맞춰야함
-    E = alpha* sgn * ( min_val -beta )
-    return E
-
-'''
-
-
 
 def cal_L(L,E):
     total=E*H.unsqueeze(0)
@@ -236,19 +184,6 @@ def hard_decision(L):
     Z = (L<0).int()
     return Z
 
-'''
-
-def update_M(M,E):
-    mask=(H==1)
-    eye=1-torch.eye(N-K,dtype=torch.bool,device=device)
-    concat_eye= torch.ones((N-K, K), dtype=torch.bool,device=device)
-    eye=torch.cat([eye,concat_eye],dim=1)
-    mask=mask&eye
-    except_self_E = mask.unsqueeze(0) * E
-
-    M=M.sum(except_self_E,dim=1)+r
-    return M
-    '''
 def update_M(E, r):
 
     sum_E = torch.sum(E, dim=1, keepdim=True)
@@ -358,7 +293,16 @@ def Q_hard(x, qk):
     return xq * Hb  # non-edge는 0           
 
 
+def Q_ste(x, qk):
+    qk = qk.to(device=x.device, dtype=x.dtype)
 
+    # ----- forward (진짜 quantization) -----
+    dist = (x.unsqueeze(-1) - qk.view(*([1]*x.ndim), -1)).abs()
+    idx = dist.argmin(dim=-1)
+    x_q = qk[idx]
+
+    # ----- backward (STE 핵심) -----
+    return x + (x_q - x).detach() # 퀀타 식의 기울기 안 쓰겠다!! == 아하!
 
 
 # decoder 1
@@ -370,8 +314,8 @@ class NMS(nn.Module):
         self.alpha=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
         self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.2)# edge-type 별 가중치 적용
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
-        #self.llr_scaling_vtoc=nn.Parameter(torch.ones(self.iteration)*1) 
-        #self.llr_scaling_ctov=nn.Parameter(torch.ones(self.iteration)*1) 
+        self.llr_scaling_vtoc=nn.Parameter(torch.ones(self.iteration)*1) 
+        self.llr_scaling_ctov=nn.Parameter(torch.ones(self.iteration)*1) 
         #uniform 초기값
         #qk_init = torch.linspace(-4, 4, num_levels) 
         #self.qk = nn.Parameter(qk_init)
@@ -383,29 +327,30 @@ class NMS(nn.Module):
         M=initial_M(M,r)
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
-    
+             
             if self.training:
              
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
 
-                #E=E/self.llr_scaling_ctov[iter]
+                E=E/self.llr_scaling_ctov[iter]
                 E=Q_soft(E,eta,qk_c)
-                #E=E*self.llr_scaling_ctov[iter]
+                E=E*self.llr_scaling_ctov[iter]
 
                 M = update_M(E, r)
-                #M=M/self.llr_scaling_vtoc[iter]
+                M=M/self.llr_scaling_vtoc[iter]
                 M=Q_soft(M,eta,qk_v)
-                #M=M*self.llr_scaling_vtoc[iter]
+                M=M*self.llr_scaling_vtoc[iter]
                 
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                #E=E/self.llr_scaling_ctov[iter]
+                E=E/self.llr_scaling_ctov[iter]
                 E=Q_soft(E,eta_test,qk_c)
-                #E=E*self.llr_scaling_ctov[iter]
+                E=E*self.llr_scaling_ctov[iter]
                 M = update_M(E, r)
-                #M=M/self.llr_scaling_vtoc[iter]
+                M=M/self.llr_scaling_vtoc[iter]
                 M=Q_soft(M,eta_test,qk_v)
-                #M=M*self.llr_scaling_vtoc[iter]
+                M=M*self.llr_scaling_vtoc[iter]
+                
                
         return r + torch.sum(E,dim=1)
     
@@ -417,13 +362,14 @@ optimizer=torch.optim.Adam( list(model.parameters()) + list(channel.parameters()
     lr=learning_rate)
 loss_fn =  nn.BCEWithLogitsLoss()   # 이거 frame 으로 바꿔야함
 
+torch.manual_seed(42)
 
 
 
 
 
+SNR = [5.0 ,6.0 ,7.0 ,8.0]
 
-SNR = [5.0,6.0,7.0,8.0]
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
 K=N*int(filename[12])/int(filename[13])
@@ -460,6 +406,25 @@ for snr in SNR:
     train_snr=snr
     model.train()
     for i in range(epoch): 
+        if(i==0): # epoch = 1 일 때
+            for p in model.parameters():
+                p.requires_grad = False
+            channel.scaling_factor.requires_grad=True
+        elif(i == 1):  # alpha ,beta 학습
+            model.llr_scaling_ctov.requires_grad = False
+            model.llr_scaling_vtoc.requires_grad = False
+            channel.scaling_factor.requires_grad=False
+
+            model.alpha.requires_grad = True
+            model.beta.requires_grad = True
+        else:
+            model.llr_scaling_ctov.requires_grad = True
+            model.llr_scaling_vtoc.requires_grad = True
+            
+            channel.scaling_factor.requires_grad=False
+            model.alpha.requires_grad=False
+            model.beta.requires_grad=False
+
         for _ in range(step):
             K_bit = make_k_bit(K,batch) # f x k
             code = K_bit.float()@G.float()# (f x k) x (k x n) == (f x n)
@@ -479,12 +444,12 @@ for snr in SNR:
         #print("epoch : " , i, "updated beta : ", model.beta.data)  # 1epoch 당  알파 업데이트 값
         #print("epoch : " , i, "updated qk : ", model.qk.data)  # 1epoch 당  알파 업데이트 값
         #print("epoch : " , i, "updated eta : ", model.eta.data)  # 1epoch 당  알파 업데이트 값
-        
-    print("updated alpha : ", model.alpha.data[:,:,-1])  # 최종  알파 업데이트 값
-    print("updated beta : ", model.beta.data[:,:,-1])
-    print("updated scaling factor_channel : ", channel.scaling_factor.data)
-    #print("updated scaling factor_ctov : ", model.llr_scaling_ctov.data)
-    #print("updated scaling factor_vtoc : ", model.llr_scaling_vtoc.data)
+        print("epoch : ", i)
+        print("updated alpha : ", model.alpha.data[:,:,-1])  # 최종  알파 업데이트 값
+        print("updated beta : ", model.beta.data[:,:,-1])
+        print("updated scaling factor_channel : ", channel.scaling_factor.data)
+        print("updated scaling factor_ctov : ", model.llr_scaling_ctov.data)
+        print("updated scaling factor_vtoc : ", model.llr_scaling_vtoc.data)
     #print("updated alpha shape : ", model.alpha.shape)  # 최종  알파 업데이트 값
     #print("updated llr_scaling : ",model.llr_scaling.data)
     print(f"snr: {snr} test start!") 
