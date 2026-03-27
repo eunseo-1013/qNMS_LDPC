@@ -20,7 +20,7 @@ frame = 100000
 batch = 20
 epoch = 1
 test_frame= 1000000
-test_batch=50
+test_batch=5000
 iteration_num=20
 
  
@@ -31,14 +31,14 @@ learning_rate=0.001
 
 #qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
-b_c = 6
-b_r=6
-b_v = 6
+b_c = 2
+b_r=2
+b_v = 2
 eta=0.5
 eta_test=0
 alpha=12  # range (12)
 
-print(" snr 8,5 all quantization",
+print(" not scaling factor all 2 quantization",
       f"b_r : {b_r} , b_c : {b_c} , b_v : {b_v} , eta : {eta} , alpha : {alpha}")
 
 print(b_r)
@@ -370,8 +370,8 @@ class NMS(nn.Module):
         self.alpha=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.7) # edge-type 별 가중치 적용
         self.beta=nn.Parameter(torch.ones(base_matrix_shape[0],base_matrix_shape[1],self.iteration)*0.2)# edge-type 별 가중치 적용
         #self.eta=nn.Parameter(torch.ones(self.iteration)*0.7) # iter 별 가중치 적용
-        self.llr_scaling_vtoc=nn.Parameter(torch.ones(self.iteration)*1) 
-        self.llr_scaling_ctov=nn.Parameter(torch.ones(self.iteration)*1) 
+        #self.llr_scaling_vtoc=nn.Parameter(torch.ones(self.iteration)*1) 
+        #self.llr_scaling_ctov=nn.Parameter(torch.ones(self.iteration)*1) 
         #uniform 초기값
         #qk_init = torch.linspace(-4, 4, num_levels) 
         #self.qk = nn.Parameter(qk_init)
@@ -388,24 +388,24 @@ class NMS(nn.Module):
              
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
 
-                E=E/self.llr_scaling_ctov[iter]
+                #E=E/self.llr_scaling_ctov[iter]
                 E=Q_soft(E,eta,qk_c)
-                E=E*self.llr_scaling_ctov[iter]
+                #E=E*self.llr_scaling_ctov[iter]
 
                 M = update_M(E, r)
-                M=M/self.llr_scaling_vtoc[iter]
+                #M=M/self.llr_scaling_vtoc[iter]
                 M=Q_soft(M,eta,qk_v)
-                M=M*self.llr_scaling_vtoc[iter]
+                #M=M*self.llr_scaling_vtoc[iter]
                 
             else:
                 E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
-                E=E/self.llr_scaling_ctov[iter]
+                #E=E/self.llr_scaling_ctov[iter]
                 E=Q_soft(E,eta_test,qk_c)
-                E=E*self.llr_scaling_ctov[iter]
+                #E=E*self.llr_scaling_ctov[iter]
                 M = update_M(E, r)
-                M=M/self.llr_scaling_vtoc[iter]
+                #M=M/self.llr_scaling_vtoc[iter]
                 M=Q_soft(M,eta_test,qk_v)
-                M=M*self.llr_scaling_vtoc[iter]
+                #M=M*self.llr_scaling_vtoc[iter]
                
         return r + torch.sum(E,dim=1)
     
@@ -423,7 +423,7 @@ loss_fn =  nn.BCEWithLogitsLoss()   # 이거 frame 으로 바꿔야함
 
 
 
-SNR = [5.0,8.0]
+SNR = [5.0,6.0,7.0,8.0]
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])
 K=N*int(filename[12])/int(filename[13])
@@ -483,8 +483,8 @@ for snr in SNR:
     print("updated alpha : ", model.alpha.data[:,:,-1])  # 최종  알파 업데이트 값
     print("updated beta : ", model.beta.data[:,:,-1])
     print("updated scaling factor_channel : ", channel.scaling_factor.data)
-    print("updated scaling factor_ctov : ", model.llr_scaling_ctov.data)
-    print("updated scaling factor_vtoc : ", model.llr_scaling_vtoc.data)
+    #print("updated scaling factor_ctov : ", model.llr_scaling_ctov.data)
+    #print("updated scaling factor_vtoc : ", model.llr_scaling_vtoc.data)
     #print("updated alpha shape : ", model.alpha.shape)  # 최종  알파 업데이트 값
     #print("updated llr_scaling : ",model.llr_scaling.data)
     print(f"snr: {snr} test start!") 

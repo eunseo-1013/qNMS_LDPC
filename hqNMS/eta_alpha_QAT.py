@@ -13,23 +13,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-print("all quantization")
+print(" 100000 batch=20  22 all quantization")
 # model 1 bit
-'''
-frame = 100000
-batch = 20
+#100000
+#1000000
+frame =100000
+batch=20
 epoch = 3 # 1일때는 alpha, beta 만! 2일 때는  -> 스케일링 값!
-test_frame= 1000000
-test_batch=50
+test_frame=1000000
+test_batch=5000
 iteration_num=20
-'''
 
-frame = 20
-batch = 20
-epoch = 3 # 1일때는 alpha, beta 만! 2일 때는  -> 스케일링 값!
-test_frame= 50
-test_batch=50
-iteration_num=1
+
  
 
 learning_rate=0.001
@@ -38,9 +33,9 @@ learning_rate=0.001
 
 #qk=torch.linspace(-4, 4, 2**b) # -4 -1.333 1.333 +4
 
-b_c = 6
-b_r=6
-b_v = 6
+b_c = 3
+b_r=3
+b_v = 3
 eta=0.5
 eta_test=0
 alpha=12  # range (12)
@@ -333,17 +328,28 @@ class NMS(nn.Module):
         for iter in range(self.iteration): # 한 프레임당 반복 수
             # c -> v 
              
-            E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
+            if self.training:
+             
+                E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
 
-            E=E/self.llr_scaling_ctov[iter]
-            E=Q_ste(E,qk_c)
-            E=E*self.llr_scaling_ctov[iter]
+                E=E/self.llr_scaling_ctov[iter]
+                E=Q_soft(E,eta,qk_c)
+                E=E*self.llr_scaling_ctov[iter]
 
-            M = update_M(E, r)
-            
-            M=M/self.llr_scaling_vtoc[iter]
-            M=Q_ste(M,qk_v)
-            M=M*self.llr_scaling_vtoc[iter]
+                M = update_M(E, r)
+                M=M/self.llr_scaling_vtoc[iter]
+                M=Q_soft(M,eta,qk_v)
+                M=M*self.llr_scaling_vtoc[iter]
+                
+            else:
+                E=c_to_v(M,alpha=self.alpha[:,:,iter],beta=self.beta[:,:,iter])
+                E=E/self.llr_scaling_ctov[iter]
+                E=Q_soft(E,eta_test,qk_c)
+                E=E*self.llr_scaling_ctov[iter]
+                M = update_M(E, r)
+                M=M/self.llr_scaling_vtoc[iter]
+                M=Q_soft(M,eta_test,qk_v)
+                M=M*self.llr_scaling_vtoc[iter]
                 
                
         return r + torch.sum(E,dim=1)
@@ -362,7 +368,7 @@ torch.manual_seed(42)
 
 
 
-SNR = [4.0]
+SNR = [5.0 ,6.0 ,7.0 ,8.0]
 
 filename="wman_N0576_R34_z24.txt"
 N=int(filename[6:10])

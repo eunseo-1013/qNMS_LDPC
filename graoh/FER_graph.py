@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+from qNMS.NMS.graph import BER_4
 
 
 # snr 별 train - test 한 것들
@@ -31,12 +32,34 @@ FER_1=[1.0, 1.0, 1.0, 1.0, 0.9982, 0.9313, 0.5894, 0.1673, 0.0187]
 FER_2=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 
+
+BER_2=[0.037529539351851854,0.029558233796296296, 0.015618256944444445,0.006685800925925926,0.0048852453703703705,0.0006499444444444444]
+FER_2=[1.0,0.999992, 0.98085,0.843103,0.674187,0.333813,0.204086 ]
+
+
+BER_3=[0.03486280555555556, 0.020426039351851853, 0.00946644212962963, 0.0014520787037037037, 0.0003392175925925926, 0.00014804398148148147, 3.9655092592592596e-05]
+BER_4=[0.999533, 0.988919, 0.920302, 0.378916, 0.122786, 0.057432, 0.016241]
+
 plt.figure(figsize=(10, 7))
 
 # semilogy
 #plt.semilogy(SNR, BER_1, marker='o', markersize=6, linewidth=1.5,label=" NMS - spatial weight sharing,  init alpha =0.7 init beta = 0.05")
-plt.semilogy(SNR, FER_1, marker='o', markersize=6, linewidth=1.5,label=" NMS - edge weight sharing,  init alpha =0.7 init beta = 0.2")
-plt.semilogy(SNR, BER_1,linestyle='--', marker='o', markersize=6, linewidth=1.5,label=" NMS - edge weight sharing,  init alpha =0.7 init beta = 0.2")
+plt.semilogy(SNR, BER_1, color='light grey',marker='o', markersize=6, linewidth=1.5,label="NMS")
+plt.semilogy(SNR, FER_1,color='light grey',linestyle='--', marker='o', markersize=6, linewidth=1.5,label="NMS")
+
+
+plt.semilogy(SNR, BER_2,color='red', marker='o', markersize=6, linewidth=1.5,label=" all 2bit qNMS")
+plt.semilogy(SNR, FER_2,color='red',linestyle='--', marker='o', markersize=6, linewidth=1.5,label="all 2bit qNMS")
+
+
+plt.semilogy(SNR, BER_3,color='orange', marker='o', markersize=6, linewidth=1.5,label=" all 3bit qNMS")
+plt.semilogy(SNR, FER_3,color='orange',linestyle='--', marker='o', markersize=6, linewidth=1.5,label="all 3bit qNMS")
+
+
+plt.semilogy(SNR, BER_4,color='blue', marker='o', markersize=6, linewidth=1.5,label=" all 6bit qNMS")
+plt.semilogy(SNR, FER_4,color='blue',linestyle='--', marker='o', markersize=6, linewidth=1.5,label="all 6bit qNMS")
+
+
 plt.xlabel("SNR (dB)", fontsize=12)
 plt.ylabel("Frame Error Rate (FER)", fontsize=12)
 plt.title(f'Iteration: {iteration_num}, Train SNR: test SNR\n SNR - BER ', fontsize=14)
